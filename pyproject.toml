@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scalable-rqa-volatility"
+version = "0.1.0"
+description = "Scalable RQA for volatility regime prediction"
+requires-python = ">=3.12"
+
+[tool.setuptools.packages.find]
+where = ["src"]

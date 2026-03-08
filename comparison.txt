@@ -1,0 +1,240 @@
+================================================================================
+  DATASET 1 — FULL MODEL COMPARISON (Final, 2026-03-08)
+  Dataset: Core_TimeSeries.csv (synthetic, 1902–2017, non-stationary)
+  Purpose: RQ3 stress test — robustness to noise & non-stationarity
+================================================================================
+
+Split summary:
+  Train: 20,986 rows (1902–1983), regime_mean=0.347
+  Val:    4,497 rows (1983–2000), regime_mean=0.307
+  Test:   4,497 rows (2000–2017), regime_mean=0.284
+
+NOTE: Massive distribution shift — test RV mean is ~6x lower than train.
+This is intentionally retained as a non-stationarity stress test for RQ3.
+
+================================================================================
+  A. ECONOMETRIC MODELS (unchanged)
+================================================================================
+
+HAR-RV:
+  Accuracy = 0.897    F1 = 0.827    ROC-AUC = 0.954
+  Calibration: b = 0.000617
+
+GJR-GARCH:
+  Accuracy = 0.786    F1 = 0.689    ROC-AUC = 0.888
+  Calibration: b = 9.68e-05, a_sigma_to_rv = 0.00974
+
+================================================================================
+  B. DEEP LEARNING MODELS (improved: +RV features, +LR scheduler, +grad clip)
+================================================================================
+
+LSTM (improved, 19 features):
+  Accuracy = 0.918    F1 = 0.866    ROC-AUC = 0.975
+  Calibration: b = 0.00343 | Stopped epoch: 50/50
+  Confusion: [[2781, 216], [130, 1118]]
+  vs. OLD: F1 0.858→0.866 (+0.008), AUC 0.971→0.975 (+0.004)
+
+GINN λ_garch sweep (improved architecture, 19 features):
+  λ=0.0:  Acc=0.918  F1=0.866  AUC=0.975  (= pure LSTM, sanity check ✓)
+  λ=0.1:  Acc=0.916  F1=0.863  AUC=0.974
+  λ=0.3:  Acc=0.898  F1=0.839  AUC=0.968
+  λ=0.5:  Acc=0.867  F1=0.801  AUC=0.954
+  Best: λ=0.0 | Teacher distillation hurts monotonically on this dataset.
+  vs. OLD (λ=0.3): F1 0.793→0.839 (+0.046), AUC 0.961→0.968 (+0.007)
+
+================================================================================
+  C. RQA FEATURE BASELINES — Hyperparameter Sweep
+     All use: cols=(log_return, rv), RR=0.1, unified threshold tuning
+================================================================================
+
+Config definitions:
+  default:       window=90,  step=5, m=4, tau=2, mode=joint
+  small_window:  window=30,  step=5, m=3, tau=1, mode=joint
+  medium_window: window=60,  step=5, m=4, tau=2, mode=joint
+  per_series:    window=90,  step=5, m=4, tau=2, mode=per_series (12 features)
+  high_m:        window=90,  step=5, m=6, tau=3, mode=joint
+
+--- RF Standard (same across configs sharing same std features) ---
+
+  default/per_series/high_m:  F1=0.670  AUC=0.879  thr=0.442
+  small_window/medium_window: F1=0.689  AUC=0.878  thr=0.395
+
+--- RF RQA-only ---
+
+  Config          | F1    | AUC   | threshold
+  default         | 0.443 | 0.495 | 0.498
+  small_window    | 0.443 | 0.504 | 0.495
+  medium_window   | 0.443 | 0.502 | 0.496
+  per_series      | 0.404 | 0.532 | 0.395    ← best AUC for RQA-only
+  high_m          | 0.443 | 0.500 | 0.499
+
+--- RF Standard+RQA (combined) ---
+
+  Config          | F1    | AUC   | threshold
+  default         | 0.684 | 0.878 | 0.422
+  small_window    | 0.680 | 0.878 | 0.442
+  medium_window   | 0.687 | 0.879 | 0.419    ← best AUC
+  per_series      | 0.683 | 0.877 | 0.361
+  high_m          | 0.677 | 0.878 | 0.446
+
+--- LogReg RQA-only ---
+
+  Config          | F1    | AUC   | threshold
+  default         | 0.443 | 0.505 | 0.496
+  small_window    | 0.443 | 0.504 | 0.494
+  medium_window   | 0.443 | 0.502 | 0.497
+  per_series      | 0.267 | 0.483 | 0.487
+  high_m          | 0.443 | 0.500 | 0.499
+
+--- LogReg Standard+RQA (combined) ---
+
+  Config          | F1    | AUC   | threshold
+  default         | 0.503 | 0.774 | 0.447
+  small_window    | 0.558 | 0.781 | 0.435    ← best F1
+  medium_window   | 0.500 | 0.780 | 0.448
+  per_series      | 0.524 | 0.710 | 0.436
+  high_m          | 0.527 | 0.783 | 0.444    ← best AUC
+
+Summary: RQA config has minimal impact. All RQA-only variants hover near
+chance (AUC 0.48–0.53). Combined RF variants are tightly clustered at
+AUC 0.877–0.879. The distribution shift dominates — RQA features calibrated
+on high-volatility training data carry almost no signal in the calm test set.
+
+================================================================================
+  D. β-RQA FEATURE BASELINES — β Sweep
+     Config: window=90, step=5, m=4, tau=2, transform=minmax
+     10 features: RR, DET, LAM, LMAX, TT, ENTR, LAM_h, TT_h, ΔLAM, ΔTT
+================================================================================
+
+--- RF β-RQA-only ---
+
+  β     | F1    | AUC   | threshold
+  0.0   | 0.357 | 0.528 | 0.383
+  0.5   | 0.353 | 0.523 | 0.395
+  1.0   | 0.365 | 0.520 | 0.374
+  1.5   | 0.357 | 0.541 | 0.375    ← best AUC
+  2.0   | 0.360 | 0.521 | 0.378
+
+--- LogReg β-RQA-only ---
+
+  β     | F1    | AUC   | threshold
+  0.0   | 0.324 | 0.496 | 0.483
+  0.5   | 0.324 | 0.500 | 0.485
+  1.0   | 0.341 | 0.516 | 0.480
+  1.5   | 0.354 | 0.543 | 0.482    ← best AUC
+  2.0   | 0.352 | 0.558 | 0.481    ← best AUC (LogReg)
+
+--- RF Standard+β-RQA ---
+
+  β     | F1    | AUC   | threshold
+  0.0   | 0.660 | 0.859 | 0.411
+  0.5   | 0.650 | 0.864 | 0.447
+  1.0   | 0.665 | 0.862 | 0.368
+  1.5   | 0.682 | 0.874 | 0.373    ← best F1 & AUC
+  2.0   | 0.667 | 0.862 | 0.360
+
+--- LogReg Standard+β-RQA ---
+
+  β     | F1    | AUC   | threshold
+  0.0   | 0.398 | 0.629 | 0.438
+  0.5   | 0.433 | 0.646 | 0.440
+  1.0   | 0.427 | 0.658 | 0.441
+  1.5   | 0.454 | 0.691 | 0.444    ← best F1 & AUC
+  2.0   | 0.411 | 0.711 | 0.465    ← best AUC (LogReg)
+
+Summary: β=1.5 is the best overall β for RF models on this dataset.
+β-RQA-only still near chance (AUC 0.52–0.56). RF Std+β-RQA at β=1.5
+reaches AUC=0.874, which is close to RF Std alone (0.879) but still
+doesn't beat it. β-RQA features hurt more than help on this dataset.
+
+================================================================================
+  E. FULL RANKING — ALL MODELS ON DATASET 1 TEST SET (by ROC-AUC)
+================================================================================
+
+ Rank | Model                              | F1    | AUC
+ -----|------------------------------------|-------|------
+   1  | LSTM (improved)                    | 0.866 | 0.975
+   2  | GINN λ=0.0 (= LSTM)               | 0.866 | 0.975
+   3  | GINN λ=0.1                         | 0.863 | 0.974
+   4  | GINN λ=0.3                         | 0.839 | 0.968
+   5  | HAR-RV                             | 0.827 | 0.954
+   6  | GINN λ=0.5                         | 0.801 | 0.954
+   7  | GJR-GARCH                          | 0.689 | 0.888
+   8  | RF Std (default/high_m)            | 0.670 | 0.879
+   9  | RF Std+RQA (medium_window)         | 0.687 | 0.879
+  10  | RF Std (small/med window)          | 0.689 | 0.878
+  11  | RF Std+RQA (default)               | 0.684 | 0.878
+  12  | RF Std+RQA (small_window)          | 0.680 | 0.878
+  13  | RF Std+RQA (high_m)               | 0.677 | 0.878
+  14  | RF Std+RQA (per_series)            | 0.683 | 0.877
+  15  | RF Std+β-RQA (β=1.5)              | 0.682 | 0.874
+  16  | RF Std+β-RQA (β=0.5)              | 0.650 | 0.864
+  17  | RF Std+β-RQA (β=1.0)              | 0.665 | 0.862
+  18  | RF Std+β-RQA (β=2.0)              | 0.667 | 0.862
+  19  | RF Std+β-RQA (β=0.0)              | 0.660 | 0.859
+  20  | LogReg Std (various)               | 0.527 | 0.785
+  21  | LogReg Std+RQA (high_m)            | 0.527 | 0.783
+  22  | LogReg Std+RQA (small_window)      | 0.558 | 0.781
+  23  | LogReg Std+RQA (medium_window)     | 0.500 | 0.780
+  24  | LogReg Std+RQA (default)           | 0.503 | 0.774
+  25  | LogReg Std+β-RQA (β=2.0)          | 0.411 | 0.711
+  26  | LogReg Std+RQA (per_series)        | 0.524 | 0.710
+  27  | LogReg Std+β-RQA (β=1.5)          | 0.454 | 0.691
+  28  | LogReg Std+β-RQA (β=1.0)          | 0.427 | 0.658
+  29  | LogReg Std+β-RQA (β=0.5)          | 0.433 | 0.646
+  30  | LogReg Std+β-RQA (β=0.0)          | 0.398 | 0.629
+  31  | LogReg β-RQA-only (β=2.0)         | 0.352 | 0.558
+  32  | LogReg β-RQA-only (β=1.5)         | 0.354 | 0.543
+  33  | RF β-RQA-only (β=1.5)             | 0.357 | 0.541
+  34  | RF RQA-only (per_series)           | 0.404 | 0.532
+  35  | RF β-RQA-only (β=0.0)             | 0.357 | 0.528
+  36  | RF β-RQA-only (β=0.5)             | 0.353 | 0.523
+  37  | RF β-RQA-only (β=2.0)             | 0.360 | 0.521
+  38  | RF β-RQA-only (β=1.0)             | 0.365 | 0.520
+  39  | LogReg β-RQA-only (β=1.0)         | 0.341 | 0.516
+  40  | LogReg RQA-only (default)          | 0.443 | 0.505
+  41  | LogReg RQA-only (small_window)     | 0.443 | 0.504
+  42  | LogReg RQA-only (medium_window)    | 0.443 | 0.502
+  43  | LogReg RQA-only (high_m)           | 0.443 | 0.500
+  44  | LogReg β-RQA-only (β=0.5)         | 0.324 | 0.500
+  45  | RF RQA-only (default)              | 0.443 | 0.495
+  46  | LogReg β-RQA-only (β=0.0)         | 0.324 | 0.496
+  47  | RF RQA-only (high_m)              | 0.443 | 0.500
+  48  | RF RQA-only (small_window)         | 0.443 | 0.504
+  49  | RF RQA-only (medium_window)        | 0.443 | 0.502
+  50  | LogReg RQA-only (per_series)       | 0.267 | 0.483
+
+================================================================================
+  F. KEY FINDINGS FOR RQ3 (non-stationarity stress test)
+================================================================================
+
+1. DEEP LEARNING DOMINATES: LSTM with RV features achieves AUC=0.975,
+   far ahead of all other approaches. Adding lagged RV as input was the
+   single most impactful improvement (+0.046 F1 for GINN at λ=0.3).
+
+2. TEACHER DISTILLATION FAILS: GINN's GJR-GARCH teacher (AUC=0.888)
+   is worse than the student. Distillation hurts monotonically:
+   λ=0.0 (0.975) > λ=0.1 (0.974) > λ=0.3 (0.968) > λ=0.5 (0.954).
+
+3. RQA FEATURES AT CHANCE: All RQA-only and β-RQA-only variants perform
+   near random (AUC 0.48–0.56). The extreme distribution shift means
+   recurrence patterns calibrated on high-volatility training data
+   carry no discriminative signal in the calm test period.
+
+4. RQA CONFIG INSENSITIVE: Varying window (30/60/90), embedding (m=3-6,
+   tau=1-3), and mode (joint/per_series) made virtually no difference.
+   RF Std+RQA hovers at AUC 0.877–0.879 regardless of config.
+
+5. β SELECTION MATTERS SLIGHTLY: β=1.5 is best for RF Std+β-RQA
+   (AUC=0.874), but all β values underperform RF Std alone (0.879).
+   The horizontal line measures (LAM_h, TT_h) provide modest benefit
+   for β-RQA-only (F1 improved vs old 6-feature version).
+
+6. STANDARD FEATURES SUFFICIENT: Simple rolling statistics (ret_abs,
+   ret_sq, rv, rolling means/stds) with RF capture nearly all
+   predictable signal on this dataset (AUC=0.879).
+
+CONCLUSION FOR DATASET 1: Under extreme non-stationarity, recurrence-
+based features add no value. The real test of RQA/β-RQA will be
+Dataset 2, where train and test share similar distributional properties.
+================================================================================
