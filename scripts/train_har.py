@@ -16,7 +16,7 @@ def repo_root() -> Path:
 
 
 def load_split(name: str) -> pd.DataFrame:
-    return pd.read_parquet(repo_root() / "data" / "processed" / f"dataset1_{name}.parquet")
+    return pd.read_parquet(repo_root() / "data" / "processed" / f"dataset2_{name}.parquet")
 
 
 def rolling_threshold_from_history(rv: np.ndarray, lookback: int = 252, q: float = 0.7) -> np.ndarray:

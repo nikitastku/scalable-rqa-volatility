@@ -44,7 +44,7 @@ def repo_root() -> Path:
 
 
 def load_split(name: str) -> pd.DataFrame:
-    return pd.read_parquet(repo_root() / "data" / "processed" / f"dataset1_{name}.parquet")
+    return pd.read_parquet(repo_root() / "data" / "processed" / f"dataset2_{name}.parquet")
 
 
 def split_slices(n_train: int, n_val: int, n_test: int) -> dict[str, slice]:
