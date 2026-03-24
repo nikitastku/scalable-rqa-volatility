@@ -1,0 +1,210 @@
+"""
+train_beta_features_baselines_d3.py — β-RQA baselines for Dataset 3 (intraday multi-stock).
+
+Same structure as train_features_baselines_d3.py but uses β-RQA with
+10 features (incl. horizontal measures from Dreesen 2025).
+"""
+from __future__ import annotations
+
+import argparse
+import time
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import confusion_matrix
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+
+from scalable_rqa_volatility.evaluation.metrics import classification_metrics
+from scalable_rqa_volatility.logging_utils import get_logger
+from scalable_rqa_volatility.recurrence.beta_rqa import BetaRQAConfig, beta_rqa_features_rolling
+from scalable_rqa_volatility.recurrence.embeddings import EmbeddingConfig
+
+
+STD_FEATURE_COLS = [
+    "ret_abs", "ret_sq", "rv",
+    "ret_mean_30", "ret_std_30", "ret_abs_mean_30", "rv_mean_30", "rv_std_30",
+    "ret_mean_120", "ret_std_120", "ret_abs_mean_120", "rv_mean_120", "rv_std_120",
+    "ret_mean_390", "ret_std_390", "ret_abs_mean_390", "rv_mean_390", "rv_std_390",
+]
+
+
+def repo_root() -> Path:
+    return Path(__file__).resolve().parents[1]
+
+
+def load_split(name: str) -> pd.DataFrame:
+    return pd.read_parquet(repo_root() / "data" / "processed" / f"dataset3_{name}.parquet")
+
+
+def compute_beta_rqa_per_stock(df: pd.DataFrame, cfg: BetaRQAConfig, cols: tuple[str, ...]) -> pd.DataFrame:
+    """Compute β-RQA features per stock."""
+    all_feats = []
+    tickers = sorted(df["ticker"].unique())
+
+    for ticker in tickers:
+        mask = df["ticker"] == ticker
+        df_ticker = df.loc[mask].reset_index(drop=True)
+        feats = beta_rqa_features_rolling(df_ticker, cols, cfg, prefix="beta_rqa")
+        feats.index = df.index[mask]
+        all_feats.append(feats)
+
+    return pd.concat(all_feats).sort_index()
+
+
+def build_xy(df, X_df, label_col="regime"):
+    y_next = df[label_col].shift(-1).to_numpy()
+    ok = pd.notna(y_next)
+    X = X_df.to_numpy(dtype=float)[ok]
+    y = y_next[ok].astype(int)
+    X = np.where(np.isfinite(X), X, np.nan)
+    keep = np.isfinite(X).all(axis=1) & np.isfinite(y)
+    return X[keep], y[keep]
+
+
+def build_xy_per_stock(df, X_df):
+    all_X, all_y = [], []
+    for ticker in df["ticker"].unique():
+        mask = df["ticker"] == ticker
+        df_t = df.loc[mask].reset_index(drop=True)
+        X_t = X_df.loc[mask].reset_index(drop=True)
+        X_arr, y_arr = build_xy(df_t, X_t)
+        all_X.append(X_arr)
+        all_y.append(y_arr)
+    return np.concatenate(all_X), np.concatenate(all_y)
+
+
+def f1_fast(y_true, y_pred):
+    tp = int(((y_true == 1) & (y_pred == 1)).sum())
+    fp = int(((y_true == 0) & (y_pred == 1)).sum())
+    fn = int(((y_true == 1) & (y_pred == 0)).sum())
+    denom = 2 * tp + fp + fn
+    return float((2 * tp) / denom) if denom else 0.0
+
+
+def best_threshold_target_rate(y_true, prob):
+    y_true = np.asarray(y_true, dtype=int).reshape(-1)
+    prob = np.asarray(prob, dtype=float).reshape(-1)
+    if y_true.size == 0:
+        return 0.5, 0.0
+    target = float(np.clip(np.mean(y_true), 0.05, 0.95))
+    if prob.size > 100000:
+        grid = np.unique(np.quantile(prob, np.linspace(0.01, 0.99, 499)))
+    else:
+        grid = np.unique(prob)
+    best_t, best_f1 = None, -1.0
+    for t in grid:
+        y_pred = (prob >= float(t)).astype(int)
+        pos = float(np.mean(y_pred))
+        if not (target * 0.5 <= pos <= min(0.99, target * 1.5)):
+            continue
+        f1 = f1_fast(y_true, y_pred)
+        if f1 > best_f1:
+            best_f1 = f1
+            best_t = float(t)
+    if best_t is None:
+        t = float(np.quantile(prob, 1.0 - target))
+        y_pred = (prob >= t).astype(int)
+        return float(t), float(f1_fast(y_true, y_pred))
+    return float(best_t), float(best_f1)
+
+
+def fit_thresholded(name, model, Xtr, ytr, Xva, yva, Xte, yte, logger):
+    t0 = time.time()
+    model.fit(Xtr, ytr)
+    fit_time = time.time() - t0
+    p_val = model.predict_proba(Xva)[:, 1]
+    thr, val_f1 = best_threshold_target_rate(yva, p_val)
+    p_test = model.predict_proba(Xte)[:, 1]
+    pred = (p_test >= thr).astype(int)
+    metrics = classification_metrics(yte, pred, p_test)
+    cm = confusion_matrix(yte, pred)
+    logger.info({f"{name}_threshold": float(thr), f"{name}_val_f1": float(val_f1),
+                 f"{name}_metrics": metrics, f"{name}_cm": cm.tolist(),
+                 f"{name}_fit_time_s": round(fit_time, 1)})
+
+
+def main() -> None:
+    logger = get_logger()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--beta", type=float, default=1.0)
+    args = parser.parse_args()
+
+    beta_cfg = BetaRQAConfig(
+        window=60, step=20, recurrence_rate=0.1,
+        embed=EmbeddingConfig(m=4, tau=2),
+        beta=args.beta, transform="minmax",
+    )
+    rqa_cols = ("log_return",)
+
+    logger.info({"beta": args.beta, "window": beta_cfg.window, "step": beta_cfg.step,
+                 "m": beta_cfg.embed.m, "tau": beta_cfg.embed.tau})
+
+    train = load_split("train")
+    val = load_split("val")
+    test = load_split("test")
+    logger.info(f"Train: {len(train):,}, Val: {len(val):,}, Test: {len(test):,}")
+
+    # Standard features
+    X_std_train = train[STD_FEATURE_COLS].copy()
+    X_std_val = val[STD_FEATURE_COLS].copy()
+    X_std_test = test[STD_FEATURE_COLS].copy()
+
+    X_std_tr, y_tr = build_xy_per_stock(train, X_std_train)
+    X_std_va, y_va = build_xy_per_stock(val, X_std_val)
+    X_std_te, y_te = build_xy_per_stock(test, X_std_test)
+
+    # β-RQA features
+    logger.info(f"Computing β-RQA features (β={args.beta})...")
+    full = pd.concat([train, val, test], ignore_index=True)
+    n_tr, n_va = len(train), len(val)
+
+    t0 = time.time()
+    X_beta_all = compute_beta_rqa_per_stock(full, beta_cfg, rqa_cols)
+    beta_time = time.time() - t0
+    logger.info(f"β-RQA computation: {beta_time:.1f}s, {X_beta_all.shape[1]} features")
+
+    X_beta_train = X_beta_all.iloc[:n_tr].reset_index(drop=True)
+    X_beta_val = X_beta_all.iloc[n_tr:n_tr + n_va].reset_index(drop=True)
+    X_beta_test = X_beta_all.iloc[n_tr + n_va:].reset_index(drop=True)
+
+    X_beta_tr, y_tr2 = build_xy_per_stock(train, X_beta_train)
+    X_beta_va, y_va2 = build_xy_per_stock(val, X_beta_val)
+    X_beta_te, y_te2 = build_xy_per_stock(test, X_beta_test)
+
+    # Align
+    ntr = min(len(y_tr), len(y_tr2))
+    nva = min(len(y_va), len(y_va2))
+    nte = min(len(y_te), len(y_te2))
+    X_std_tr, y_tr = X_std_tr[:ntr], y_tr[:ntr]
+    X_beta_tr = X_beta_tr[:ntr]
+    X_std_va, y_va = X_std_va[:nva], y_va[:nva]
+    X_beta_va = X_beta_va[:nva]
+    X_std_te, y_te = X_std_te[:nte], y_te[:nte]
+    X_beta_te = X_beta_te[:nte]
+
+    X_comb_tr = np.concatenate([X_std_tr, X_beta_tr], axis=1)
+    X_comb_va = np.concatenate([X_std_va, X_beta_va], axis=1)
+    X_comb_te = np.concatenate([X_std_te, X_beta_te], axis=1)
+
+    logger.info({"beta_features": X_beta_tr.shape[1], "combined_features": X_comb_tr.shape[1]})
+
+    logreg = Pipeline([("scaler", StandardScaler()), ("clf", LogisticRegression(max_iter=5000, class_weight="balanced", n_jobs=-1))])
+    rf = RandomForestClassifier(n_estimators=200, min_samples_leaf=5, n_jobs=-1,
+                                class_weight="balanced_subsample", random_state=42)
+
+    # β-RQA only
+    fit_thresholded("logreg_beta", logreg, X_beta_tr, y_tr, X_beta_va, y_va, X_beta_te, y_te, logger)
+    fit_thresholded("rf_beta", rf, X_beta_tr, y_tr, X_beta_va, y_va, X_beta_te, y_te, logger)
+
+    # Standard + β-RQA
+    fit_thresholded("logreg_std_beta", logreg, X_comb_tr, y_tr, X_comb_va, y_va, X_comb_te, y_te, logger)
+    fit_thresholded("rf_std_beta", rf, X_comb_tr, y_tr, X_comb_va, y_va, X_comb_te, y_te, logger)
+
+
+if __name__ == "__main__":
+    main()

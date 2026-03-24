@@ -1,2 +1,6 @@
-data/raw/*.csv
-data/raw/*.parquet
+data/raw/
+data/interim/
+data/processed/
+
+*.parquet
+*.csv
