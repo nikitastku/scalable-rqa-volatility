@@ -784,6 +784,61 @@ RQA computation times:
    "scalable" claim in the thesis title.
 
 ================================================================================
+  G2. EXTENDED PARAMETER SWEEPS — Dataset 3 (β-RQA)
+================================================================================
+
+All sweeps at β=2.0 (best standalone β for D3 from initial sweep).
+
+--- Extended β sweep (m=4, tau=2, RR=0.1) ---
+
+  β     | RF Std+β AUC | LogReg Std+β AUC | LogReg β-only AUC
+  2.0   | 0.984        | 0.983            | 0.672
+  3.0   | 0.984        | 0.983            | 0.664
+  4.0   | 0.984        | 0.983            | 0.554
+  5.0   | 0.984        | 0.983            | 0.533
+
+  Finding: Higher β provides NO benefit on intraday data (unlike D2 daily data).
+
+--- m sweep (β=2.0, tau=2, RR=0.1) ---
+
+  m   | RF Std+β AUC | LogReg Std+β AUC | LogReg β-only AUC
+  2   | 0.984        | 0.983            | 0.506
+  3   | 0.984        | 0.983            | 0.579
+  4   | 0.984        | 0.983            | 0.672  (default)
+  5   | 0.984        | 0.983            | 0.772  ★ best standalone
+  6   | 0.984        | 0.983            | 0.649
+  7   | 0.984        | 0.983            | 0.614
+  8   | 0.984        | 0.983            | 0.667
+
+  Finding: m=5 best for standalone β-RQA (0.772). Combined models invariant.
+
+--- tau sweep (β=2.0, m=4, RR=0.1) ---
+
+  tau | RF Std+β AUC | LogReg Std+β AUC | LogReg β-only AUC
+  1   | 0.984        | 0.983            | 0.661
+  2   | 0.984        | 0.983            | 0.672  (default)
+  3   | 0.984        | 0.983            | 0.536
+  4   | 0.984        | 0.983            | 0.674  ★
+  5   | 0.984        | 0.983            | 0.637
+
+  Finding: tau=2 and tau=4 are similar. Combined models invariant.
+
+--- RR sweep (β=2.0, m=4, tau=2) ---
+
+  RR   | RF Std+β AUC | LogReg Std+β AUC
+  0.05 | 0.984        | 0.983
+  0.10 | 0.984        | 0.983
+  0.20 | 0.984        | 0.983
+
+  Finding: RR has zero effect on D3 combined models.
+
+KEY D3 EXTENDED INSIGHT: At intraday scale with 503 stocks, the standard
+features (18 rolling statistics) are so strong (AUC=0.983) that β-RQA
+parameter tuning cannot improve the combined model beyond +0.001. The
+cross-sectional diversity overwhelms recurrence feature differences.
+However, standalone β-RQA is sensitive to m (m=5 best, AUC=0.772).
+
+================================================================================
   H. CROSS-DATASET COMPARISON (D1 vs D2 vs D3)
 ================================================================================
 
@@ -813,12 +868,17 @@ OVERALL THESIS CONCLUSION:
     (D2, D3), with strongest gains on daily data (D2: +0.034 F1 for LogReg).
     ★ LogReg Std+β-RQA at β=5.0 achieves AUC=0.987, surpassing HAR-RV (0.986).
     ★ RF Std+β-RQA at β=4.0 achieves F1=0.938, best among all feature baselines.
+    On intraday data (D3), improvements are marginal (+0.001 AUC) but consistent.
   - RQ2: RQA scales to 3M rows / 503 stocks in ~5-10 minutes with step=20.
   - RQ3: Under extreme non-stationarity (D1), recurrence features fail completely.
-  - β-RQA: Optimal β depends on data and model:
-    RF: β=4.0 best on daily data (D2), β=1.0 best on intraday (D3)
-    LogReg: β=5.0 best on daily data (D2), β=1.5 best on intraday (D3)
-    Beyond-literature β values (>2) outperform standard range on daily data.
-  - Embedding: m=3, tau=2 is a robust default. Lower m is generally better.
-    RR=0.10 is a good default; RR=0.05 can benefit LogReg.
+  - β-RQA: Optimal β depends on data frequency:
+    Daily data (D2): β=4-5 (beyond literature) dramatically outperforms β≤2.
+    Intraday data (D3): β=2 (Euclidean) is sufficient; higher β provides no gain.
+    This suggests large-value emphasis (high β) benefits lower-frequency data
+    where volatility regime transitions are more pronounced.
+  - Embedding: m=3-4, tau=2 is robust for daily data. m=5 is best standalone
+    for intraday data. Combined models are largely insensitive to m/tau/RR on D3.
+  - Key insight: The value of parameter tuning depends on dataset complexity.
+    On smaller daily datasets (D2), parameter choice matters significantly.
+    On large-scale intraday data (D3), cross-sectional diversity dominates.
 ================================================================================

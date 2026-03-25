@@ -132,17 +132,20 @@ def main() -> None:
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--beta", type=float, default=1.0)
+    parser.add_argument("--m", type=int, default=4)
+    parser.add_argument("--tau", type=int, default=2)
+    parser.add_argument("--rr", type=float, default=0.1)
     args = parser.parse_args()
 
     beta_cfg = BetaRQAConfig(
-        window=60, step=20, recurrence_rate=0.1,
-        embed=EmbeddingConfig(m=4, tau=2),
+        window=60, step=20, recurrence_rate=args.rr,
+        embed=EmbeddingConfig(m=args.m, tau=args.tau),
         beta=args.beta, transform="minmax",
     )
     rqa_cols = ("log_return",)
 
-    logger.info({"beta": args.beta, "window": beta_cfg.window, "step": beta_cfg.step,
-                 "m": beta_cfg.embed.m, "tau": beta_cfg.embed.tau})
+    logger.info({"beta": args.beta, "m": args.m, "tau": args.tau,
+                 "rr": args.rr, "window": beta_cfg.window, "step": beta_cfg.step})
 
     train = load_split("train")
     val = load_split("val")
