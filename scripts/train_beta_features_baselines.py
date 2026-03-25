@@ -162,7 +162,13 @@ def main() -> None:
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--beta", type=float, default=1.0,
-                        help=f"β-divergence parameter. Suggested sweep: {BETA_VALUES}")
+                        help="β-divergence parameter. Literature: {0,0.5,1,1.5,2,3,4,5}")
+    parser.add_argument("--m", type=int, default=4,
+                        help="Embedding dimension (Marwan 2007: typically 2-8)")
+    parser.add_argument("--tau", type=int, default=2,
+                        help="Embedding delay (Zbilut 1992: typically 1-5)")
+    parser.add_argument("--rr", type=float, default=0.1,
+                        help="Recurrence rate for ε selection (Marwan 2024: 0.05-0.20)")
     args = parser.parse_args()
 
     cfg = BetaBaselineConfig()
@@ -170,8 +176,8 @@ def main() -> None:
     beta_rqa_cfg = BetaRQAConfig(
         window=cfg.rqa.window,
         step=cfg.rqa.step,
-        recurrence_rate=cfg.rqa.recurrence_rate,
-        embed=cfg.rqa.embed,
+        recurrence_rate=args.rr,
+        embed=EmbeddingConfig(m=args.m, tau=args.tau),
         beta=args.beta,
         transform="minmax",
     )
@@ -232,11 +238,12 @@ def main() -> None:
     logger.info(
         {
             "beta": float(args.beta),
+            "m": int(args.m),
+            "tau": int(args.tau),
+            "recurrence_rate": float(args.rr),
             "beta_transform": str(beta_rqa_cfg.transform),
             "beta_window": int(beta_rqa_cfg.window),
             "beta_step": int(beta_rqa_cfg.step),
-            "beta_embed_m": int(beta_rqa_cfg.embed.m),
-            "beta_embed_tau": int(beta_rqa_cfg.embed.tau),
             "std_features": int(X_std_train.shape[1]),
             "beta_rqa_features": int(X_beta_train.shape[1]),
             "combined_features": int(X_comb_train.shape[1]),
