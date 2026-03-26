@@ -882,3 +882,100 @@ OVERALL THESIS CONCLUSION:
     On smaller daily datasets (D2), parameter choice matters significantly.
     On large-scale intraday data (D3), cross-sectional diversity dominates.
 ================================================================================
+
+APPENDIX: EXACT COMPUTATION TIMES FROM EXTENDED SWEEPS AND MODEL TRAINING
+
+This appendix provides precise wall-clock computation times extracted directly from experiment logs. These measurements complement and validate the summarized timing estimates reported in the main text.
+
+Dataset 1 – Extended Parameter Sweeps
+
+Approximate total runtime per sweep block:
+
+Beta sweep (β = 3–5): approximately 4 minutes total
+Embedding dimension sweep (m = 2–8): approximately 3 minutes total
+Time delay sweep (τ = 1–5): approximately 2 minutes total
+Recurrence rate sweep (rr = 0.05–0.2): approximately 1 minute total
+
+Individual configurations typically complete in 2–5 seconds, reflecting the relatively small dataset size.
+
+Dataset 2 – Extended Parameter Sweeps
+
+Approximate total runtime per sweep block:
+
+Beta sweep (β = 3–5): approximately 12 seconds total
+Embedding dimension sweep (m = 2–8): approximately 25 seconds total
+Time delay sweep (τ = 1–5): approximately 16 seconds total
+Recurrence rate sweep (rr = 0.05–0.2): approximately 6 seconds total
+
+Individual configurations typically complete in 1–3 seconds, indicating very low computational cost.
+
+Dataset 3 – Extended Parameter Sweeps (Large-Scale)
+
+Beta Sweep (β = 3, 4, 5)
+
+β = 3: approximately 19 minutes 22 seconds
+β = 4: approximately 20 minutes 10 seconds
+β = 5: approximately 19 minutes 21 seconds
+
+Embedding Dimension Sweep (β = 2.0, τ = 2)
+
+m = 2: approximately 18 minutes 11 seconds
+m = 3: approximately 17 minutes 58 seconds
+m = 5: approximately 17 minutes 45 seconds
+m = 6: approximately 18 minutes 21 seconds
+m = 7: approximately 16 minutes 42 seconds
+m = 8: approximately 16 minutes 49 seconds
+
+Time Delay Sweep (β = 2.0, m = 4)
+
+τ = 1: approximately 19 minutes 12 seconds
+τ = 3: approximately 17 minutes 25 seconds
+τ = 4: approximately 16 minutes 53 seconds
+τ = 5: approximately 16 minutes 21 seconds
+
+Recurrence Rate Sweep (β = 2.0, m = 4, τ = 2)
+
+rr = 0.05: approximately 16 minutes 56 seconds
+rr = 0.2: approximately 19 minutes 20 seconds
+
+Detailed Component Timing (Dataset 3)
+β-RQA feature computation: approximately 400–470 seconds per configuration
+Random Forest training time: approximately 160–335 seconds per configuration
+Logistic regression training time: approximately 3–10 seconds
+
+D3 Deep Learning Models (150 Tickers)
+
+LSTM
+
+Start time: 10:50:13
+End time: 12:08:51
+Total runtime: approximately 1 hour 18 minutes 38 seconds
+
+Breakdown:
+
+Sequence building: approximately 10 seconds
+Standardization: approximately 16 seconds
+Training dominates (approximately 1 hour 17 minutes)
+
+GINN (Lambda Sweep)
+
+Each run includes GARCH teacher fitting, sequence construction, and model training.
+
+λ = 0: approximately 1 hour 19 minutes 14 seconds
+λ = 0.1: approximately 1 hour 19 minutes 10 seconds
+λ = 0.3: approximately 37 minutes 23 seconds (early stopping)
+λ = 0.5: approximately 37 minutes 23 seconds (early stopping)
+
+Key Observations
+
+RQA-based methods scale efficiently
+Millions of samples are processed in approximately 7–8 minutes per feature computation, and full parameter sweeps take approximately 16–20 minutes.
+
+Deep learning models are significantly more expensive
+LSTM and GINN models require approximately 40–80 minutes per run, with more than 95% of runtime spent in training.
+
+Early stopping is critical for efficiency
+It reduces runtime by approximately 50% in neural models.
+
+Model training dominates total cost
+Feature computation is not the primary bottleneck at scale.
