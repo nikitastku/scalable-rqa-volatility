@@ -19,15 +19,6 @@ from scalable_rqa_volatility.recurrence.embeddings import EmbeddingConfig
 from scalable_rqa_volatility.recurrence.rqa import RQAConfig, rqa_features_rolling
 from scalable_rqa_volatility.volatility.features_standard import StandardFeatureConfig, standard_features
 
-
-# ──────────────────────────────────────────────────────────────
-# EXPERIMENT VARIABLE: β values to sweep
-#   β = 0   → IS-divergence (scale-invariant, emphasizes ratios)
-#   β = 0.5 → intermediate
-#   β = 1   → KL-divergence (emphasizes small-value differences)
-#   β = 1.5 → intermediate
-#   β = 2   → Euclidean / least-squares (symmetric, same as standard RQA)
-# ──────────────────────────────────────────────────────────────
 BETA_VALUES = [0.0, 0.5, 1.0, 1.5, 2.0]
 
 
@@ -40,7 +31,7 @@ class BetaBaselineConfig:
 
 
 def repo_root() -> Path:
-    return Path(__file__).resolve().parents[1]
+    return Path(__file__).resolve().parents[2]
 
 
 def load_split(name: str) -> pd.DataFrame:
@@ -253,11 +244,9 @@ def main() -> None:
         }
     )
 
-    # β-RQA only
     fit_thresholded("logreg_beta_rqa", logreg, X_beta_train, y_train, X_beta_val, y_val, X_beta_test, y_test, logger)
     fit_thresholded("rf_beta_rqa", rf, X_beta_train, y_train, X_beta_val, y_val, X_beta_test, y_test, logger)
 
-    # Standard + β-RQA combined
     fit_thresholded("logreg_std_beta", logreg, X_comb_train, y_train, X_comb_val, y_val, X_comb_test, y_test, logger)
     fit_thresholded("rf_std_beta", rf, X_comb_train, y_train, X_comb_val, y_val, X_comb_test, y_test, logger)
 

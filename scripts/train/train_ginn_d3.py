@@ -64,7 +64,7 @@ class NumpyDataset(Dataset):
 
 
 def repo_root() -> Path:
-    return Path(__file__).resolve().parents[1]
+    return Path(__file__).resolve().parents[2]
 
 
 def load_split(name: str) -> pd.DataFrame:
@@ -99,11 +99,11 @@ def fit_garch_per_stock(df: pd.DataFrame, train_frac: float = 0.7, scale: float 
             res = am.fit(disp="off", last_obs=n_train)
             fc = res.forecast(horizon=1, start=0, reindex=False)
             var = fc.variance.iloc[:, 0].to_numpy()
-            sigma = np.sqrt(var) / scale  # back to original scale
+            sigma = np.sqrt(var) / scale  
             idx = df.index[mask]
             all_sigma.iloc[idx[:len(sigma)]] = sigma[:len(idx)]
         except Exception:
-            pass  # skip stocks where GARCH fails
+            pass  
 
     return all_sigma
 
@@ -130,7 +130,6 @@ def build_supervised_with_teacher_per_stock(
         feats = df_t[feat_cols].to_numpy(dtype=np.float32)
         rv = df_t["rv"].astype(np.float32).to_numpy()
 
-        # Vectorized sliding window
         shape = (n_t - seq_len, seq_len, n_feat)
         strides = (feats.strides[0], feats.strides[0], feats.strides[1])
         windows = np.lib.stride_tricks.as_strided(feats, shape=shape, strides=strides).copy()
@@ -266,7 +265,6 @@ def main() -> None:
     test = load_split("test")
     full = pd.concat([train, val, test], ignore_index=True)
 
-    # Subsample tickers for memory
     all_tickers = sorted(set(train["ticker"].unique()) & set(val["ticker"].unique()) & set(test["ticker"].unique()))
     if args.max_tickers and len(all_tickers) > args.max_tickers:
         np.random.seed(42)
@@ -279,13 +277,11 @@ def main() -> None:
 
     logger.info(f"Train: {len(train):,}, Val: {len(val):,}, Test: {len(test):,}")
 
-    # Fit GARCH teacher per stock
     logger.info("Fitting GJR-GARCH teacher per stock...")
     sigma = fit_garch_per_stock(full, train_frac=0.7, scale=cfg.garch_scale)
     valid_sigma = sigma.notna().sum()
     logger.info(f"GARCH teacher: {valid_sigma:,}/{len(full):,} valid sigma values")
 
-    # Build sequences
     logger.info("Building sequences with teacher signal...")
     sigma_np = sigma.to_numpy(dtype=float)
     sigma_tr = sigma_np[:len(train)]
@@ -301,7 +297,6 @@ def main() -> None:
     if len(Xtr) == 0 or len(Xva) == 0 or len(Xte) == 0:
         raise RuntimeError("No sequences produced.")
 
-    # Standardize — per-feature
     logger.info("Standardizing features...")
     n_feat = Xtr.shape[2]
     for f in range(n_feat):
@@ -337,11 +332,9 @@ def main() -> None:
     fit_info = fit_model(model, tr_loader, va_loader, device, train_cfg, lambda_garch=args.lambda_garch)
     logger.info(fit_info)
 
-    # Predict and evaluate
     log_pred_va = predict(model, va_loader, device) * y_sd + y_mu
     log_pred_te = predict(model, te_loader, device) * y_sd + y_mu
 
-    # Get regime labels for val/test sequences (matching the build logic)
     y_regime_va, y_regime_te = [], []
 
     pos = 0

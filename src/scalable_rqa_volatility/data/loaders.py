@@ -1,4 +1,3 @@
-# src/scalable_rqa_volatility/data/loaders.py
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -31,7 +30,6 @@ def load_core_timeseries(path: Path, schema: CoreDatasetSchema | None = None) ->
     if missing:
         raise ValueError(f"Dataset missing required columns: {missing}")
 
-    # ✅ IMPORTANT FIX: European date parsing
     df[schema.date_col] = pd.to_datetime(df[schema.date_col], dayfirst=True, errors="raise")
 
     df = df.sort_values(schema.date_col).reset_index(drop=True)

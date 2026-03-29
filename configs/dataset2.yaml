@@ -1,13 +1,3 @@
-# Dataset 2: S&P 500 Macro-Financial Volatility Dataset
-# Real S&P 500 daily data (2010-2019) with macro/financial indicators
-# Purpose: Primary evaluation dataset for RQ1 (performance comparison)
-#
-# Key properties:
-#   - 2,264 daily rows (real market data)
-#   - 31 columns: price, returns, VIX, options, cross-market, macro, commodities
-#   - Test/Train RV ratio ≈ 0.96x (no distribution shift)
-#   - Realistic return distribution: kurtosis ~4.8, skew ~-0.5
-
 raw_file: "S_P_500_Macro-Financial_Volatility_Dataset.csv"
 close_col: "SP500"
 log_return_col: "SP500 Log Returns"

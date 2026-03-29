@@ -18,11 +18,11 @@ from scalable_rqa_volatility.utils.seed import set_global_seed
 
 @dataclass(frozen=True)
 class TrainConfig:
-    epochs: int = 50                # increased from 30
+    epochs: int = 50                
     batch_size: int = 256
     lr: float = 1e-3
     weight_decay: float = 1e-5
-    patience: int = 10              # increased from 6
+    patience: int = 10            
     num_workers: int = 0
     # --- NEW ---
     scheduler_factor: float = 0.5
@@ -57,7 +57,7 @@ class NumpyDataset(Dataset):
 
 
 def repo_root() -> Path:
-    return Path(__file__).resolve().parents[1]
+    return Path(__file__).resolve().parents[2]
 
 
 def load_split(name: str) -> pd.DataFrame:
@@ -79,7 +79,6 @@ def build_features(df: pd.DataFrame, windows: tuple[int, ...]) -> pd.DataFrame:
     rv = df["rv"].astype(float)
     out = pd.DataFrame(index=df.index)
 
-    # return-based
     out["ret"] = r
     out["ret_abs"] = r.abs()
     out["ret_sq"] = r.pow(2)
@@ -88,7 +87,6 @@ def build_features(df: pd.DataFrame, windows: tuple[int, ...]) -> pd.DataFrame:
         out[f"ret_std_{w}"] = r.rolling(w, min_periods=w).std(ddof=0)
         out[f"ret_abs_mean_{w}"] = r.abs().rolling(w, min_periods=w).mean()
 
-    # NEW: RV-based
     out["rv"] = rv
     for w in windows:
         out[f"rv_mean_{w}"] = rv.rolling(w, min_periods=w).mean()
@@ -142,7 +140,6 @@ def fit_model(
     opt = torch.optim.AdamW(model.parameters(), lr=cfg.lr, weight_decay=cfg.weight_decay)
     loss_fn = torch.nn.MSELoss()
 
-    # --- NEW: scheduler ---
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         opt, mode="min", factor=cfg.scheduler_factor,
         patience=cfg.scheduler_patience,
@@ -171,7 +168,6 @@ def fit_model(
 
             scaler.scale(loss).backward()
 
-            # --- NEW: gradient clipping ---
             scaler.unscale_(opt)
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=cfg.max_grad_norm)
 
@@ -194,7 +190,6 @@ def fit_model(
 
         val_loss = float(np.mean(vals)) if vals else float("inf")
 
-        # --- NEW: step scheduler ---
         scheduler.step(val_loss)
 
         if val_loss < best_val:
@@ -310,7 +305,6 @@ def main() -> None:
     val_start, val_end = n_train, n_train + n_val - 1
     test_start, test_end = n_train + n_val, len(full) - 1
 
-    # --- CHANGED: build_features instead of return_only_features ---
     feat_df = build_features(full, cfg.windows).replace([np.inf, -np.inf], np.nan).astype(float)
     feats = feat_df.to_numpy(dtype=float, copy=False)
 

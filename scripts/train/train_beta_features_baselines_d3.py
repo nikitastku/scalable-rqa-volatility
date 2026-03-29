@@ -33,7 +33,7 @@ STD_FEATURE_COLS = [
 
 
 def repo_root() -> Path:
-    return Path(__file__).resolve().parents[1]
+    return Path(__file__).resolve().parents[2]
 
 
 def load_split(name: str) -> pd.DataFrame:
@@ -152,7 +152,6 @@ def main() -> None:
     test = load_split("test")
     logger.info(f"Train: {len(train):,}, Val: {len(val):,}, Test: {len(test):,}")
 
-    # Standard features
     X_std_train = train[STD_FEATURE_COLS].copy()
     X_std_val = val[STD_FEATURE_COLS].copy()
     X_std_test = test[STD_FEATURE_COLS].copy()
@@ -161,7 +160,6 @@ def main() -> None:
     X_std_va, y_va = build_xy_per_stock(val, X_std_val)
     X_std_te, y_te = build_xy_per_stock(test, X_std_test)
 
-    # β-RQA features
     logger.info(f"Computing β-RQA features (β={args.beta})...")
     full = pd.concat([train, val, test], ignore_index=True)
     n_tr, n_va = len(train), len(val)
@@ -179,7 +177,6 @@ def main() -> None:
     X_beta_va, y_va2 = build_xy_per_stock(val, X_beta_val)
     X_beta_te, y_te2 = build_xy_per_stock(test, X_beta_test)
 
-    # Align
     ntr = min(len(y_tr), len(y_tr2))
     nva = min(len(y_va), len(y_va2))
     nte = min(len(y_te), len(y_te2))
@@ -200,11 +197,9 @@ def main() -> None:
     rf = RandomForestClassifier(n_estimators=200, min_samples_leaf=5, n_jobs=-1,
                                 class_weight="balanced_subsample", random_state=42)
 
-    # β-RQA only
     fit_thresholded("logreg_beta", logreg, X_beta_tr, y_tr, X_beta_va, y_va, X_beta_te, y_te, logger)
     fit_thresholded("rf_beta", rf, X_beta_tr, y_tr, X_beta_va, y_va, X_beta_te, y_te, logger)
 
-    # Standard + β-RQA
     fit_thresholded("logreg_std_beta", logreg, X_comb_tr, y_tr, X_comb_va, y_va, X_comb_te, y_te, logger)
     fit_thresholded("rf_std_beta", rf, X_comb_tr, y_tr, X_comb_va, y_va, X_comb_te, y_te, logger)
 

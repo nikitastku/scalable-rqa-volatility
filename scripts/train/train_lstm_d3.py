@@ -32,14 +32,13 @@ STD_FEATURE_COLS = [
     "ret_mean_390", "ret_std_390", "ret_abs_mean_390", "rv_mean_390", "rv_std_390",
 ]
 
-# Also include log_return as a feature (like D1/D2's 'ret')
-FEATURE_COLS = ["log_return"] + STD_FEATURE_COLS  # 19 features total
+FEATURE_COLS = ["log_return"] + STD_FEATURE_COLS 
 
 
 @dataclass(frozen=True)
 class TrainConfig:
     epochs: int = 30
-    batch_size: int = 512       # larger batch for 2M rows
+    batch_size: int = 512       
     lr: float = 1e-3
     weight_decay: float = 1e-5
     patience: int = 8
@@ -57,7 +56,7 @@ class ModelConfig:
     dropout: float = 0.1
     device: str = "cuda"
     eps: float = 1e-12
-    thr_lookback: int = 975     # ~5 trading days in bars
+    thr_lookback: int = 975     
     thr_q: float = 0.7
 
 
@@ -70,7 +69,7 @@ class NumpySeqDataset(Dataset):
 
 
 def repo_root() -> Path:
-    return Path(__file__).resolve().parents[1]
+    return Path(__file__).resolve().parents[2]
 
 
 def load_split(name: str) -> pd.DataFrame:
@@ -104,16 +103,13 @@ def build_supervised_per_stock(
         feats = df_t[feat_cols].to_numpy(dtype=np.float32)
         rv = df_t["rv"].astype(np.float32).to_numpy()
 
-        # Vectorized sliding window using stride_tricks
         shape = (n - seq_len, seq_len, n_feat)
         strides = (feats.strides[0], feats.strides[0], feats.strides[1])
         windows = np.lib.stride_tricks.as_strided(feats, shape=shape, strides=strides).copy()
 
-        # y = log(rv[t+1]) for each window ending at t (where t = seq_len-1 .. n-2)
-        y_rv = rv[seq_len:]  # rv at t+1 for window ending at t
+        y_rv = rv[seq_len:]  
         y_log = np.log(y_rv.astype(np.float32) + eps)
 
-        # Filter out any NaN/inf
         valid = (np.isfinite(windows).reshape(len(windows), -1).all(axis=1)
                  & np.isfinite(y_log))
 
@@ -237,7 +233,6 @@ def main() -> None:
     val = load_split("val")
     test = load_split("test")
 
-    # Subsample tickers for memory
     all_tickers = sorted(set(train["ticker"].unique()) & set(val["ticker"].unique()) & set(test["ticker"].unique()))
     if args.max_tickers and len(all_tickers) > args.max_tickers:
         np.random.seed(42)
@@ -259,7 +254,6 @@ def main() -> None:
     if len(Xtr) == 0 or len(Xva) == 0 or len(Xte) == 0:
         raise RuntimeError("No sequences produced.")
 
-    # Standardize — per-feature, avoids slow 3D array operations
     logger.info("Standardizing features...")
     n_feat = Xtr.shape[2]
     for f in range(n_feat):
@@ -294,23 +288,18 @@ def main() -> None:
     fit_info = fit_model(model, tr_loader, va_loader, device, train_cfg)
     logger.info(fit_info)
 
-    # Predict and evaluate
     log_pred_te = predict(model, te_loader, device) * y_sd + y_mu
     pred_rv_te = np.exp(log_pred_te)
 
-    # Simple regime: predicted RV vs calibrated threshold
     log_pred_va = predict(model, va_loader, device) * y_sd + y_mu
 
-    # Use val regime labels to calibrate
-    # For multi-stock, we need the regime from the original data
-    # Reconstruct y_regime for val/test sequences (vectorized)
     def get_regime_labels(split_df, seq_len):
         labels = []
         for ticker in split_df["ticker"].unique():
             mask = split_df["ticker"] == ticker
             regime = split_df.loc[mask, "regime"].astype(int).to_numpy()
             if len(regime) > seq_len:
-                labels.append(regime[seq_len:])  # regime at t+1 for windows ending at t
+                labels.append(regime[seq_len:])  
         return np.concatenate(labels) if labels else np.array([], dtype=int)
 
     y_va_regime = get_regime_labels(val, cfg.seq_len)[:len(log_pred_va)]

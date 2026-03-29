@@ -18,7 +18,7 @@ from scalable_rqa_volatility.logging_utils import get_logger
 
 
 def repo_root() -> Path:
-    return Path(__file__).resolve().parents[1]
+    return Path(__file__).resolve().parents[2]
 
 
 def load_split(name: str) -> pd.DataFrame:
@@ -52,7 +52,6 @@ def main() -> None:
     n_train = len(train)
     n_val = len(val)
 
-    # Per-stock GARCH fitting and prediction
     all_val_scores, all_val_y = [], []
     all_test_scores, all_test_y = [], []
     fitted, failed = 0, 0
@@ -68,7 +67,6 @@ def main() -> None:
         rv = df_t["rv"].astype(float).to_numpy()
         regime = df_t["regime"].astype(float).to_numpy()
 
-        # Per-stock split boundaries
         n = len(df_t)
         n_tr = int(n * 0.7)
         n_va = int(n * 0.15)
@@ -80,7 +78,6 @@ def main() -> None:
             var = fc.variance.iloc[:, 0].to_numpy()
             sigma = np.sqrt(var) / scale
 
-            # Scale factor: a * sigma -> RV
             sigma_tr = sigma[:n_tr - 1]
             rv_next_tr = rv[1:n_tr]
             m = np.isfinite(sigma_tr) & np.isfinite(rv_next_tr) & (sigma_tr > 0)
@@ -89,7 +86,6 @@ def main() -> None:
             else:
                 a = 1.0
 
-            # Val predictions
             val_start, val_end = n_tr, n_tr + n_va
             for t in range(val_start, min(val_end, n - 1)):
                 pred_rv = a * sigma[t] if t < len(sigma) else np.nan
@@ -97,7 +93,6 @@ def main() -> None:
                     all_val_scores.append(pred_rv)
                     all_val_y.append(int(regime[t + 1]))
 
-            # Test predictions
             test_start = n_tr + n_va
             for t in range(test_start, n - 1):
                 pred_rv = a * sigma[t] if t < len(sigma) else np.nan

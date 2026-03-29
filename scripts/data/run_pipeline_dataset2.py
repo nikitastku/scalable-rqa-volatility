@@ -43,7 +43,6 @@ def load_sp500_macro(path: Path) -> pd.DataFrame:
     """
     df = pd.read_csv(path)
 
-    # Parse date — the dataset uses dd/mm/yyyy format
     df["Date"] = pd.to_datetime(df["Date"], dayfirst=True, errors="raise")
     df = df.sort_values("Date").reset_index(drop=True)
 
@@ -65,11 +64,9 @@ def add_returns_and_rv(df: pd.DataFrame, rv_window: int = 20) -> pd.DataFrame:
     """
     out = df.copy()
 
-    # Compute log return from SP500 close
     close = out["SP500"].astype(float)
     computed_log_ret = np.log(close).diff()
 
-    # Validate against provided log returns
     provided_log_ret = out["SP500 Log Returns"].astype(float)
     valid_mask = computed_log_ret.notna() & provided_log_ret.notna()
     if valid_mask.sum() > 0:
@@ -84,7 +81,6 @@ def add_returns_and_rv(df: pd.DataFrame, rv_window: int = 20) -> pd.DataFrame:
     else:
         out["log_return"] = computed_log_ret
 
-    # Compute 20-day rolling RV (same as Dataset 1)
     out["rv"] = (
         out["log_return"]
         .rolling(rv_window, min_periods=rv_window)
@@ -96,7 +92,7 @@ def add_returns_and_rv(df: pd.DataFrame, rv_window: int = 20) -> pd.DataFrame:
 
 
 def main() -> None:
-    repo_root = Path(__file__).resolve().parents[1]
+    repo_root = Path(__file__).resolve().parents[2]
     cfg = PipelineConfig(
         repo_root=repo_root,
         dataset_path=repo_root / "data" / "raw" / "S_P_500_Macro-Financial_Volatility_Dataset.csv",
@@ -108,18 +104,15 @@ def main() -> None:
     paths = DataPaths.from_repo_root(cfg.repo_root)
     ensure_dirs(paths.raw, paths.interim, paths.processed)
 
-    # ── Load ──
     logger.info(f"Loading dataset: {cfg.dataset_path}")
     df = load_sp500_macro(cfg.dataset_path)
     logger.info(f"Rows={len(df)} Cols={len(df.columns)} DateRange={df['Date'].min().date()}..{df['Date'].max().date()}")
 
-    # ── Compute returns and RV ──
     logger.info(f"Computing log_return and rv (window={cfg.rv_window})")
     df = add_returns_and_rv(df, rv_window=cfg.rv_window)
     df = df.dropna(subset=["log_return", "rv"]).reset_index(drop=True)
     logger.info(f"After dropna: {len(df)} rows")
 
-    # ── Log dataset statistics ──
     log_ret = df["log_return"]
     rv = df["rv"]
     logger.info({
@@ -136,7 +129,6 @@ def main() -> None:
         "rv_autocorr_lag22": float(rv.autocorr(22)),
     })
 
-    # ── Label regimes (same methodology as Dataset 1) ──
     logger.info("Labeling regimes (rolling quantile, lookback=252, q=0.7, no-leak)")
     df = label_regimes_rolling_quantile(
         df,
@@ -151,10 +143,8 @@ def main() -> None:
     df = df.dropna(subset=["regime"]).reset_index(drop=True)
     logger.info(f"After regime labeling dropna: {len(df)} rows, regime_mean={df['regime'].mean():.3f}")
 
-    # ── Split ──
     splits = time_series_split(df, SplitConfig(train_frac=0.7, val_frac=0.15))
 
-    # ── Log split statistics ──
     for name, part in splits.items():
         rv_split = part["rv"].astype(float)
         regime_split = part["regime"].astype(float)
@@ -166,12 +156,10 @@ def main() -> None:
             f"{name}_regime_mean": float(regime_split.mean()),
         })
 
-    # Distribution shift check
     train_rv = splits["train"]["rv"].astype(float).mean()
     test_rv = splits["test"]["rv"].astype(float).mean()
     logger.info({"test_train_rv_ratio": float(test_rv / train_rv)})
 
-    # ── Save ──
     for name, part in splits.items():
         out_path = paths.processed / f"dataset2_{name}.parquet"
         write_table(part, out_path, fmt="parquet")

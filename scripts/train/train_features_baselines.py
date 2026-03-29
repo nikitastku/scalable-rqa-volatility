@@ -18,10 +18,6 @@ from scalable_rqa_volatility.recurrence.embeddings import EmbeddingConfig
 from scalable_rqa_volatility.recurrence.rqa import RQAConfig, rqa_features_rolling, estimate_epsilon_from_train
 from scalable_rqa_volatility.volatility.features_standard import StandardFeatureConfig, standard_features
 
-
-# ──────────────────────────────────────────────────────────────
-# EXPERIMENT GRID: RQA hyperparameter configurations to try
-# ──────────────────────────────────────────────────────────────
 RQA_CONFIGS = {
     "default": RQAConfig(window=90, step=5, recurrence_rate=0.1, embed=EmbeddingConfig(m=4, tau=2), mode="joint"),
     "small_window": RQAConfig(window=30, step=5, recurrence_rate=0.1, embed=EmbeddingConfig(m=3, tau=1), mode="joint"),
@@ -39,7 +35,7 @@ class BaselineConfig:
 
 
 def repo_root() -> Path:
-    return Path(__file__).resolve().parents[1]
+    return Path(__file__).resolve().parents[2]
 
 
 def load_split(name: str) -> pd.DataFrame:

@@ -24,7 +24,7 @@ class PipelineConfig:
 
 
 def main() -> None:
-    repo_root = Path(__file__).resolve().parents[1]
+    repo_root = Path(__file__).resolve().parents[2]
     cfg = PipelineConfig(
         repo_root=repo_root,
         dataset_path=repo_root / "data" / "raw" / "Core_TimeSeries.csv",

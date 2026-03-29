@@ -10,7 +10,7 @@ from scalable_rqa_volatility.plots.io import ensure_dir
 
 
 def repo_root() -> Path:
-    return Path(__file__).resolve().parents[1]
+    return Path(__file__).resolve().parents[2]
 
 
 def load_split(name: str) -> pd.DataFrame:

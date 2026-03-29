@@ -1,32 +1,19 @@
-# Dataset 3: Yahoo Finance Intraday S&P 500 Data
-# 503 stocks, ~2-minute bars, Jan 8 - Feb 25 2026
-# Purpose: Large-scale intraday evaluation — scalability (RQ2) + cross-sectional diversity
-#
-# Key properties:
-#   - ~3M rows across 503 tickers
-#   - ~6,000 bars per stock (~35 trading days × 195 bars/day)
-#   - Intraday features: windows in bars (30≈1h, 120≈4h, 390≈2days)
-#   - RV computed at intraday level (60-bar rolling std ≈ 2 hours)
-#   - Regime labeling: 975-bar lookback ≈ 5 trading days
-
 raw_file: "sp500_intraday.parquet"
 frequency: "2min"
 close_col: "close"
 timestamp_col: "timestamp"
 ticker_col: "ticker"
 
-rv_window: 60         # bars (~2 hours)
-regime_lookback: 975  # bars (~5 trading days)
+rv_window: 60        
+regime_lookback: 975  
 regime_quantile: 0.7
 
 train_frac: 0.70
 val_frac: 0.15
 
-# Standard feature windows (in bars)
-std_windows: [30, 120, 390]   # ~1h, ~4h, ~2 trading days
+std_windows: [30, 120, 390]  
 
-# RQA config (applied in training scripts, not preprocessing)
-rqa_window: 60        # bars (~2 hours of recurrence)
+rqa_window: 60       
 rqa_step: 5
 rqa_m: 4
 rqa_tau: 2

@@ -7,7 +7,7 @@ from scalable_rqa_volatility.plots.io import load_predictions_npz, plot_combined
 
 
 def repo_root() -> Path:
-    return Path(__file__).resolve().parents[1]
+    return Path(__file__).resolve().parents[2]
 
 
 def main() -> None:

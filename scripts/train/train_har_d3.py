@@ -19,7 +19,7 @@ from scalable_rqa_volatility.logging_utils import get_logger
 
 
 def repo_root() -> Path:
-    return Path(__file__).resolve().parents[1]
+    return Path(__file__).resolve().parents[2]
 
 
 def load_split(name: str) -> pd.DataFrame:
@@ -41,13 +41,12 @@ def build_har_features_per_stock(df: pd.DataFrame) -> pd.DataFrame:
         out = pd.DataFrame(index=g.index)
         out["rv_daily"] = rv.shift(1)
         out["rv_weekly"] = rv.rolling(300, min_periods=300).mean().shift(1)
-        # Monthly: use 1950 if available, else skip
         out["rv_monthly"] = rv.rolling(1950, min_periods=1950).mean().shift(1)
 
         out["rv_next"] = rv.shift(-1)
         out["regime_next"] = g["regime"].shift(-1).astype("Int64")
         out["ticker"] = ticker
-        out["global_idx"] = g.index  # for threshold alignment
+        out["global_idx"] = g.index  
 
         har_frames.append(out.dropna(subset=["rv_daily", "rv_weekly", "rv_next", "regime_next"]))
 
@@ -76,23 +75,17 @@ def main() -> None:
     logger.info(f"Building HAR features for {full['ticker'].nunique()} stocks...")
     har = build_har_features_per_stock(full)
 
-    # Drop rows without monthly lag (stocks too short)
     har_with_monthly = har.dropna(subset=["rv_monthly"]).reset_index(drop=True)
     har_no_monthly = har[har["rv_monthly"].isna()].reset_index(drop=True)
 
     logger.info(f"HAR rows with monthly: {len(har_with_monthly)}, without: {len(har_no_monthly)}")
 
-    # Use all available rows (fill missing monthly with weekly)
     har["rv_monthly"] = har["rv_monthly"].fillna(har["rv_weekly"])
     har = har.dropna(subset=["rv_daily", "rv_weekly", "rv_monthly", "rv_next", "regime_next"]).reset_index(drop=True)
 
-    # Split back by stock's chronological position
     n_train = len(train)
     n_val = len(val)
 
-    # We need to identify which HAR rows belong to which split
-    # Since we built from the full concat, we can use global_idx
-    # But simpler: rebuild per split
     tr_har = build_har_features_per_stock(train)
     tr_har["rv_monthly"] = tr_har["rv_monthly"].fillna(tr_har["rv_weekly"])
     tr_har = tr_har.dropna(subset=["rv_daily", "rv_weekly", "rv_monthly", "rv_next", "regime_next"])
@@ -115,14 +108,11 @@ def main() -> None:
     model.fit(Xtr, ytr)
     logger.info(f"HAR coefficients: {dict(zip(feat_cols, model.coef_))}, intercept={model.intercept_:.6f}")
 
-    # Predict and threshold
     def eval_split(split_har, name):
         X = split_har[feat_cols].to_numpy(dtype=float)
         pred_rv = model.predict(X)
         y_true = split_har["regime_next"].to_numpy(dtype=int)
 
-        # Simple approach: regime = 1 if predicted RV > quantile threshold
-        # Use val to calibrate
         return y_true, pred_rv
 
     y_va, score_va = eval_split(va_har, "val")

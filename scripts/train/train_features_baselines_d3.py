@@ -28,11 +28,6 @@ from scalable_rqa_volatility.logging_utils import get_logger
 from scalable_rqa_volatility.recurrence.embeddings import EmbeddingConfig
 from scalable_rqa_volatility.recurrence.rqa import RQAConfig, rqa_features_rolling, estimate_epsilon_from_train
 
-
-# ──────────────────────────────────────────────────────────────
-# RQA configs adapted for intraday data (windows in bars)
-# step=20 for speed (~4x faster than step=5)
-# ──────────────────────────────────────────────────────────────
 RQA_CONFIGS = {
     "default":       RQAConfig(window=60, step=20, recurrence_rate=0.1, embed=EmbeddingConfig(m=4, tau=2), mode="joint"),
     "small_window":  RQAConfig(window=30, step=20, recurrence_rate=0.1, embed=EmbeddingConfig(m=3, tau=1), mode="joint"),
@@ -40,7 +35,6 @@ RQA_CONFIGS = {
     "per_series":    RQAConfig(window=60, step=20, recurrence_rate=0.1, embed=EmbeddingConfig(m=4, tau=2), mode="per_series"),
 }
 
-# Standard feature columns (precomputed in dataset3 parquet)
 STD_FEATURE_COLS = [
     "ret_abs", "ret_sq", "rv",
     "ret_mean_30", "ret_std_30", "ret_abs_mean_30", "rv_mean_30", "rv_std_30",
@@ -50,7 +44,7 @@ STD_FEATURE_COLS = [
 
 
 def repo_root() -> Path:
-    return Path(__file__).resolve().parents[1]
+    return Path(__file__).resolve().parents[2]
 
 
 def load_split(name: str) -> pd.DataFrame:
@@ -62,7 +56,6 @@ def compute_rqa_per_stock(df: pd.DataFrame, rqa_cfg: RQAConfig, rqa_cols: tuple[
     all_rqa = []
     tickers = sorted(df["ticker"].unique())
 
-    # Estimate epsilon from first few stocks in train to keep it fixed
     sample_tickers = tickers[:min(10, len(tickers))]
     sample_blocks = []
     for t in sample_tickers:
@@ -108,7 +101,6 @@ def best_threshold_target_rate(y_true: np.ndarray, prob: np.ndarray) -> tuple[fl
 
     target = float(np.clip(np.mean(y_true), 0.05, 0.95))
 
-    # For large datasets, subsample the threshold grid
     if prob.size > 100000:
         grid = np.unique(np.quantile(prob, np.linspace(0.01, 0.99, 499)))
     else:
@@ -170,7 +162,6 @@ def main() -> None:
                  "rqa_step": rqa_cfg.step, "rqa_m": rqa_cfg.embed.m,
                  "rqa_tau": rqa_cfg.embed.tau, "rqa_mode": rqa_cfg.mode})
 
-    # ── Load precomputed splits ──
     logger.info("Loading dataset3 splits...")
     train = load_split("train")
     val = load_split("val")
@@ -178,13 +169,10 @@ def main() -> None:
 
     logger.info(f"Train: {len(train):,}, Val: {len(val):,}, Test: {len(test):,}")
 
-    # ── Standard features (precomputed) ──
     X_std_train = train[STD_FEATURE_COLS].copy()
     X_std_val = val[STD_FEATURE_COLS].copy()
     X_std_test = test[STD_FEATURE_COLS].copy()
 
-    # ── Build y arrays ──
-    # We need to handle per-stock shift for y_next (don't leak across stocks)
     def build_xy_per_stock(df, X_df):
         all_X, all_y = [], []
         for ticker in df["ticker"].unique():
@@ -211,12 +199,10 @@ def main() -> None:
         "test_prevalence": float(np.mean(y_te)),
     })
 
-    # ── Classifiers ──
     logreg = Pipeline([("scaler", StandardScaler()), ("clf", LogisticRegression(max_iter=5000, class_weight="balanced", n_jobs=-1))])
     rf = RandomForestClassifier(n_estimators=200, min_samples_leaf=5, n_jobs=-1,
                                 class_weight="balanced_subsample", random_state=42)
 
-    # ── Standard-only baselines ──
     logger.info("=== Standard-only baselines ===")
     fit_thresholded("logreg_std", logreg, X_std_tr, y_tr, X_std_va, y_va, X_std_te, y_te, logger)
     fit_thresholded("rf_std", rf, X_std_tr, y_tr, X_std_va, y_va, X_std_te, y_te, logger)
@@ -225,7 +211,6 @@ def main() -> None:
         logger.info("Skipping RQA (--skip_rqa flag set)")
         return
 
-    # ── Compute RQA features per stock ──
     logger.info(f"Computing RQA features ({args.rqa_config})...")
     full = pd.concat([train, val, test], ignore_index=True)
     n_tr, n_va = len(train), len(val)
@@ -239,7 +224,6 @@ def main() -> None:
     X_rqa_val = X_rqa_all.iloc[n_tr:n_tr + n_va].reset_index(drop=True)
     X_rqa_test = X_rqa_all.iloc[n_tr + n_va:].reset_index(drop=True)
 
-    # Build RQA X/y per stock
     def build_rqa_xy_per_stock(df, X_rqa_df):
         all_X, all_y = [], []
         for ticker in df["ticker"].unique():
@@ -255,7 +239,6 @@ def main() -> None:
     X_rqa_va, y_va2 = build_rqa_xy_per_stock(val, X_rqa_val)
     X_rqa_te, y_te2 = build_rqa_xy_per_stock(test, X_rqa_test)
 
-    # Align sizes
     ntr = min(len(y_tr), len(y_tr2))
     nva = min(len(y_va), len(y_va2))
     nte = min(len(y_te), len(y_te2))
@@ -273,12 +256,10 @@ def main() -> None:
 
     logger.info({"rqa_features": X_rqa_tr.shape[1], "combined_features": X_comb_tr.shape[1]})
 
-    # ── RQA-only baselines ──
     logger.info("=== RQA-only baselines ===")
     fit_thresholded("logreg_rqa", logreg, X_rqa_tr, y_tr, X_rqa_va, y_va, X_rqa_te, y_te, logger)
     fit_thresholded("rf_rqa", rf, X_rqa_tr, y_tr, X_rqa_va, y_va, X_rqa_te, y_te, logger)
 
-    # ── Combined baselines ──
     logger.info("=== Standard+RQA combined baselines ===")
     fit_thresholded("logreg_comb", logreg, X_comb_tr, y_tr, X_comb_va, y_va, X_comb_te, y_te, logger)
     fit_thresholded("rf_comb", rf, X_comb_tr, y_tr, X_comb_va, y_va, X_comb_te, y_te, logger)
