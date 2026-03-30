@@ -36,3 +36,9 @@ def delay_embed(x: np.ndarray, cfg: EmbeddingConfig) -> np.ndarray:
     for j in range(cfg.m):
         out[:, j] = x[j * cfg.tau : j * cfg.tau + rows]
     return out
+
+def time_delay_embedding(x: np.ndarray, m: int, tau: int) -> np.ndarray:
+    """
+    Backward-compatible wrapper around delay_embed.
+    """
+    return delay_embed(x, EmbeddingConfig(m=m, tau=tau))
