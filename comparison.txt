@@ -992,6 +992,193 @@ OVERALL THESIS CONCLUSION:
     inconclusive evidence due to small test set size.
 ================================================================================
 
+================================================================================
+  RQ4: ALTERNATIVE APPROACHES FOR SCALABLE RECURRENCE PLOT REPRESENTATIONS
+  Literature review + published benchmark comparison
+================================================================================
+
+Research Question 4: What alternative approaches for scalable recurrence plot
+representations exist in the literature, and how could such approaches be
+adapted or extended to improve computational efficiency for large financial
+time series?
+
+================================================================================
+  A. ALTERNATIVE APPROACHES IN THE LITERATURE
+================================================================================
+
+Six main approaches to scalable RQA computation have been identified:
+
+1. RQA_woRP — Direct RQA without Recurrence Plot (Marwan 2025)
+   Computes line length histograms directly from phase space vectors without
+   constructing the full N x N recurrence matrix. Reduces memory from O(N^2)
+   to O(N) and computation steps by >50%, while producing EXACT results.
+   At N=25,000: 0.48s vs 2.06s for standard RQA (4.3x speedup).
+
+2. RQA_Samp — Sampled RQA (Marwan 2025)
+   Extends RQA_woRP with random sampling: instead of testing all N^2 pairs,
+   randomly samples M pairs and measures line lengths from valid starts.
+   With M=4N: 0.26s at N=25,000 (7.9x speedup, near-exact results).
+   With M=0.2N: 0.013s at N=25,000 (158x speedup, DET deviation <10^-4).
+   Accuracy: M=500 samples already yields DET deviations <10^-4 for N=25,000.
+
+3. Recurrence Microstates (Cruz 2025, Spezzatto 2024)
+   Approximates DET and LAM from sampled 3x3 sub-matrices of the RP.
+   At N=25,000 with M=4N: 0.018s (114x speedup over standard RQA).
+   Trade-off: less accurate than RQA_Samp for the same M, but faster
+   due to highly optimised compiled C code in the Julia implementation.
+
+4. RQA_OpenMP — Parallel CPU RQA (Marwan, rp_speedtest repo)
+   C-based implementation using OpenMP multithreading for parallel RP
+   construction and RQA computation. Exact results, O(N^2/P) where P
+   is the number of threads.
+   At N=200,000 with 128 threads: 1 min 51s vs 9 min 17s single-thread.
+
+5. PyRQA — OpenCL GPU-accelerated RQA (Rawald et al. 2017)
+   Massively parallel RQA using OpenCL framework on GPUs. Processes
+   time series of >1 million data points. Uses divide-and-recombine
+   paradigm to split the RP across GPU devices.
+   At N=200,000 with 2x GPU: 11.4s vs 9 min 17s single-thread (49x).
+   At N=1,000,000: ~5 min with 2x GPU (Potsdam climate data).
+
+6. AccRQA — Multi-platform accelerated RQA (Adamek et al. 2025)
+   High-performance CPU and NVIDIA GPU implementation. Requires
+   CMake and C++ compiler (or CUDA for GPU mode).
+   Benchmarked on HPC with Nvidia H100 GPU in rp_speedtest repo.
+
+================================================================================
+  B. PUBLISHED BENCHMARK: COMPUTATION TIMES (from Marwan 2025, Table 1)
+     Rossler system, N=25,000, m=3, tau=6, Euclidean norm, epsilon=1.2
+     Hardware: AMD EPYC 9554 32-Core, PIK "Foote" HPC
+================================================================================
+
+  Implementation            Time (s)    Speedup    Memory     Energy (mWh)
+  ────────────────────────  ──────────  ─────────  ─────────  ────────────
+  RQA from RP (standard)    2.06        1x         O(N^2)     28.6
+  RQA without RP (woRP)     0.48        4.3x       O(N)       6.7
+  RQA Samp (M=4N)           0.26        7.9x       O(N)       3.6
+  RQA Samp (M=0.2N)         0.013       158x       O(N)       0.18
+  Recurrence microstates    0.018       114x       O(N)       0.25
+
+================================================================================
+  C. PUBLISHED BENCHMARK: GPU SCALING (from Rawald et al. 2017, Table 1)
+     Sinus wave, m=2, tau=2, varying N
+================================================================================
+
+  N         Single Thread   OpenMP (CPU)   OpenCL 1xGPU   OpenCL 2xGPU
+  ────────  ──────────────  ────────────   ────────────   ────────────
+  20,000    5.6s            1.1s           0.8s           0.8s
+  60,000    50.2s           10.0s          3.1s           2.5s
+  100,000   2 min 20s       27.6s          6.3s           4.5s
+  200,000   9 min 17s       1 min 51s      19.3s          11.4s
+
+================================================================================
+  D. OUR APPROACH: WINDOWED RQA WITH STRIDE
+================================================================================
+
+Our implementation uses a windowed approach with stride, which is conceptually
+related to the sampling idea of RQA_Samp but operates at the window level:
+
+  - Instead of computing RQA on the full N-length series (O(N^2)),
+    we compute RQA on windows of size w with stride s.
+  - Effective operations: (N/s) windows x O(w^2) per window = O(N*w^2/s)
+  - For our D3 config: w=60, s=20, so each window is a 60x60 RP
+    (only 3,600 comparisons vs N^2 for the full series).
+
+Our measured computation times on Dataset 3 (3M rows, 503 stocks):
+  RQA (w=60, s=20):          316s   (~5.3 min)
+  RQA (w=120, s=20):         597s   (~10 min)
+  beta-RQA (w=60, s=20):     ~450s  (~7.5 min)
+  Preprocessing pipeline:    75s    (feature computation for all stocks)
+
+Per-stock average: 316s / 503 stocks = 0.63s per stock (~6,000 bars each)
+Per-window average: 0.63s / (6000/20) = 0.002s per window (60-bar window)
+
+================================================================================
+  E. COMPARISON: OUR APPROACH vs PUBLISHED BENCHMARKS
+================================================================================
+
+For a single time series of N=6,000 (typical per-stock length in D3):
+
+  Approach                    Estimated time    Notes
+  ────────────────────────    ──────────────    ─────
+  Standard RQA (full RP)      ~0.12s*          O(N^2), extrapolated
+  RQA_woRP                    ~0.03s*          4.3x faster than standard
+  RQA_Samp (M=4N)             ~0.015s*         7.9x faster
+  Our windowed (w=60,s=20)    ~0.63s           300 windows, each tiny
+  PyRQA (OpenCL, 1x GPU)      ~0.03s*          GPU-accelerated
+
+  * Extrapolated from N=25,000 benchmarks using O(N^2) scaling
+
+Our windowed approach is SLOWER than a single full-series RQA for N=6,000
+because it computes 300 separate small RQAs. However, it produces a TIME
+SERIES of RQA features (one per window), which is essential for our ML
+pipeline — a single full-series RQA would give only one feature vector per
+stock, losing all temporal dynamics.
+
+The windowed approach is thus not an alternative to full-series RQA, but a
+different computation mode designed for feature extraction in ML pipelines.
+
+================================================================================
+  F. ADAPTATION AND EXTENSION PROPOSALS FOR FINANCIAL TIME SERIES
+================================================================================
+
+1. COMBINE RQA_Samp WITH beta-DIVERGENCE (Novel proposal)
+   Marwan 2025's sampling approach samples random (i,j) pairs and measures
+   line lengths. This could be extended to use beta-divergence distance
+   (Dreesen 2025) instead of Euclidean distance for the recurrence condition.
+   Expected benefit: Faster computation (from sampling) + better sensitivity
+   to volatility regime transitions (from beta-divergence).
+   Neither paper currently combines these two ideas.
+
+2. USE PyRQA/AccRQA AS BACKEND FOR WINDOWED COMPUTATION
+   Replace our per-window scipy.spatial.distance.cdist + numpy RQA with
+   PyRQA's OpenCL-accelerated computation for each window. Since PyRQA
+   handles the full RP construction + RQA in one call, this would avoid
+   the Python-level overhead of our implementation.
+   Expected benefit: 5-10x speedup per window on GPU-equipped machines.
+
+3. ADAPTIVE WINDOW SIZING BASED ON VOLATILITY
+   Use smaller windows during calm periods (where recurrence structure is
+   simple) and larger windows during volatile periods (where longer patterns
+   emerge). This reduces computation in the majority of calm bars while
+   preserving detail during regime transitions.
+   Motivation: Financial data is inherently heterogeneous — most of the time
+   series is low-volatility, with brief high-volatility episodes.
+
+4. PARALLEL PER-STOCK COMPUTATION
+   Our current implementation processes stocks sequentially. Using Python
+   multiprocessing or joblib, RQA for each stock could be computed in
+   parallel across CPU cores. With 8 cores and 503 stocks, this would
+   reduce total time by ~8x (from ~5 min to ~40 seconds).
+
+5. MICROSTATE-BASED FEATURES FOR ML (inspired by Cruz 2025)
+   Instead of computing standard RQA measures from the full RP, compute
+   the 3x3 microstate distribution directly and use the microstate
+   probabilities as ML features. This provides a richer feature set
+   (up to 2^9 = 512 microstate types) and is naturally fast through
+   the sampling approach.
+
+================================================================================
+  G. SUMMARY FOR RQ4
+================================================================================
+
+The literature offers several approaches to scalable RQA, ranging from
+algorithmic improvements (RQA_woRP: 4x, RQA_Samp: up to 158x speedup)
+to hardware acceleration (PyRQA/AccRQA: up to 49x on GPU). Our windowed
+approach achieves scalability through a different mechanism — computing many
+small RQAs rather than one large one — which is uniquely suited to ML
+feature extraction where temporal resolution is needed.
+
+For financial time series specifically, the most promising extensions would be:
+(1) combining sampling with beta-divergence for faster yet more sensitive
+    recurrence analysis, and
+(2) parallelising per-stock computation for immediate practical speedup.
+
+These approaches are complementary: algorithmic improvements reduce per-window
+cost, hardware acceleration reduces per-computation cost, and our windowed
+stride approach reduces the number of computations needed.
+================================================================================
+
 APPENDIX: EXACT COMPUTATION TIMES FROM EXTENDED SWEEPS AND MODEL TRAINING
 
 This appendix provides precise wall-clock computation times extracted directly from experiment logs. These measurements complement and validate the summarized timing estimates reported in the main text.

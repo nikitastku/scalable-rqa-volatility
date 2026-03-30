@@ -46,7 +46,6 @@ def load_splits(dataset: int) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
     val = pd.read_parquet(processed / f"{prefix}_val.parquet")
     test = pd.read_parquet(processed / f"{prefix}_test.parquet")
 
-    # Validate required columns exist
     required = {"log_return", "rv", "regime"}
     for name, df in [("train", train), ("val", val), ("test", test)]:
         missing = required - set(df.columns)

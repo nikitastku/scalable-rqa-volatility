@@ -1,10 +1,3 @@
-# src/scalable_rqa_volatility/recurrence/beta_rqa.py
-#
-# IMPROVED: adds horizontal line measures (LAM_h, TT_h) and asymmetry
-# measures (ΔLAM, ΔTT) from Dreesen/Deckert/Marwan/Boussé 2025.
-# For β ≠ 2, β-RPs are asymmetric → horizontal ≠ vertical line structures.
-# This asymmetry carries directional information about the dynamics.
-
 from __future__ import annotations
 
 from dataclasses import dataclass

@@ -1,4 +1,3 @@
-# src/scalable_rqa_volatility/volatility/labeling.py
 from __future__ import annotations
 
 from dataclasses import dataclass
