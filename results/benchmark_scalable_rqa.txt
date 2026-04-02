@@ -1,0 +1,41 @@
+================================================================================
+  SCALABLE RQA BENCHMARK — DATASET 3
+  Methods: Standard (full RP) | RQA_woRP (Marwan 2025) | RQA_Samp (Marwan 2025)
+================================================================================
+
+
+A. SINGLE-STOCK TIMING (stock: IRM, 4216 bars)
+
+       N   Standard       woRP    Samp 4N     Samp N  Samp 0.2N
+  ----------------------------------------------------------
+      50     0.0015s     0.0025s     0.0015s     0.0015s     0.0000s
+     100     0.0041s     0.0045s     0.0030s     0.0015s     0.0000s
+     200     0.0076s     0.0085s     0.0045s     0.0000s     0.0015s
+     500     0.0244s     0.0276s     0.0174s     0.0038s     0.0016s
+    1000     0.0637s     0.0732s     0.0255s     0.0077s     0.0015s
+    2000     0.1862s     0.2035s     0.0379s     0.0101s     0.0030s
+    3000     0.3765s     0.4024s     0.0580s     0.0131s     0.0035s
+
+
+B. ACCURACY AT N=3000 (vs exact standard RQA)
+
+  Measure       Exact       woRP    Samp 4N     Samp N  Samp 0.2N
+  ----------------------------------------------------------
+  rr           0.1125     0.1125     0.1123     0.1040     0.1017
+  det          0.5327     0.5327     0.0064     0.0018     0.0003
+  lam          0.6591     0.6591     0.0075     0.0019     0.0005
+  lmax        58.0000    58.0000    58.0000    31.0000    37.0000
+  tt           4.2947     4.2947     8.6583     8.4858    11.7368
+  entr         2.3774     2.3774     3.0219     2.9330     2.5483
+
+
+C. WINDOWED PIPELINE TIMING (per stock, w=60, s=20)
+
+  Windowed exact (current):  0.40s
+  Windowed Samp M=4N:        0.20s (speedup: 2.0x)
+  Windowed Samp M=N:         0.13s (speedup: 3.1x)
+
+  Projected 503 stocks:
+    Exact               : 200s (3.3 min)
+    Samp M=4N           : 99s (1.6 min)
+    Samp M=N            : 65s (1.1 min)

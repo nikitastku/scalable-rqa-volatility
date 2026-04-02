@@ -1,0 +1,153 @@
+================================================================================
+  FEATURE IMPORTANCE ANALYSIS — DATASET 3
+  Answers: Why do RQA features help? Which ones matter most?
+================================================================================
+
+
+A. MODEL PERFORMANCE SUMMARY
+
+  RF Std-only:   AUC = 0.983416  F1 = 0.8833
+  RF Std+RQA:    AUC = 0.983939  F1 = 0.8844
+  RF Std+β-RQA:  AUC = 0.983690  F1 = 0.8830
+  ΔAUC (RQA):    +0.000523
+  ΔAUC (β-RQA):  +0.000274
+
+
+B. GINI IMPORTANCE — RF Std+RQA (top 25 features)
+
+  Feature                                   Gini       Type
+  ---------------------------------------------------------
+  rv                                    0.285179   Standard
+  rv_mean_30                            0.100392   Standard
+  ret_std_30                            0.096932   Standard
+  ret_abs_mean_30                       0.081177   Standard
+  ret_abs_mean_390                      0.058936   Standard
+  ret_std_120                           0.048872   Standard
+  rv_mean_390                           0.046432   Standard
+  rv_std_30                             0.037061   Standard
+  ret_std_390                           0.033466   Standard
+  rv_mean_120                           0.030416   Standard
+  rv_std_390                            0.028453   Standard
+  ret_abs_mean_120                      0.027669   Standard
+  rv_std_120                            0.021610   Standard
+  ret_mean_390                          0.018380   Standard
+  ret_mean_120                          0.016993   Standard
+  ret_mean_30                           0.013797   Standard
+  rqa_joint_rr                          0.012488        RQA
+  rqa_joint_lam                         0.008407        RQA
+  rqa_joint_det                         0.006818        RQA
+  rqa_joint_tt                          0.006296        RQA
+  ret_sq                                0.005843   Standard
+  ret_abs                               0.005587   Standard
+  rqa_joint_lmax                        0.004730        RQA
+  rqa_joint_entr                        0.004065        RQA
+
+
+C. PERMUTATION IMPORTANCE — RF Std+RQA (top 25 features)
+
+  Feature                                Perm ΔAUC        Std       Type
+  ---------------------------------------------------------------------
+  rv                                      0.189068   0.000632   Standard
+  ret_abs_mean_390                        0.027972   0.000107   Standard
+  rv_mean_390                             0.016403   0.000086   Standard
+  ret_std_30                              0.006522   0.000076   Standard
+  rv_mean_30                              0.003924   0.000060   Standard
+  ret_std_120                             0.002487   0.000081   Standard
+  rv_std_30                               0.001654   0.000025   Standard
+  ret_abs_mean_120                        0.001415   0.000051   Standard
+  ret_std_390                             0.001402   0.000035   Standard
+  rv_std_390                              0.001338   0.000037   Standard
+  rv_mean_120                             0.000648   0.000043   Standard
+  ret_mean_390                            0.000608   0.000020   Standard
+  ret_abs_mean_30                         0.000538   0.000035   Standard
+  rv_std_120                              0.000492   0.000035   Standard
+  rqa_joint_rr                            0.000417   0.000016        RQA
+  rqa_joint_det                           0.000372   0.000014        RQA
+  rqa_joint_entr                          0.000328   0.000009        RQA
+  ret_abs                                 0.000210   0.000012   Standard
+  rqa_joint_lam                           0.000201   0.000013        RQA
+  rqa_joint_tt                            0.000196   0.000010        RQA
+  ret_sq                                  0.000182   0.000009   Standard
+  rqa_joint_lmax                          0.000160   0.000008        RQA
+  ret_mean_120                            0.000099   0.000012   Standard
+  ret_mean_30                             0.000083   0.000014   Standard
+
+
+D. RQA FEATURE RANKING (by permutation importance)
+
+  RQA Feature                            Perm ΔAUC        Std
+  -----------------------------------------------------------
+  rqa_joint_rr                            0.000417   0.000016
+  rqa_joint_det                           0.000372   0.000014
+  rqa_joint_entr                          0.000328   0.000009
+  rqa_joint_lam                           0.000201   0.000013
+  rqa_joint_tt                            0.000196   0.000010
+  rqa_joint_lmax                          0.000160   0.000008
+
+
+E. ABLATION — Drop each RQA feature from RF Std+RQA
+
+  Baseline AUC: 0.983939
+  Dropped Feature                            AUC         ΔAUC        ΔF1
+  ---------------------------------------------------------------------
+  ALL_RQA_removed                       0.983416    -0.000523    -0.0011
+  rqa_joint_det                         0.983793    -0.000147    +0.0001
+  rqa_joint_entr                        0.983813    -0.000126    -0.0003
+  rqa_joint_lam                         0.983882    -0.000057    +0.0000
+  rqa_joint_lmax                        0.983854    -0.000085    +0.0001
+  rqa_joint_rr                          0.983810    -0.000130    -0.0008
+  rqa_joint_tt                          0.983871    -0.000068    -0.0011
+
+
+F. β-RQA FEATURE RANKING (by permutation importance)
+
+  β-RQA Feature                          Perm ΔAUC        Std
+  -----------------------------------------------------------
+  beta_rqa_log_return_entr                0.000223   0.000014
+  beta_rqa_log_return_det                 0.000212   0.000010
+  beta_rqa_log_return_tt                  0.000176   0.000010
+  beta_rqa_log_return_tt_h                0.000155   0.000015
+  beta_rqa_log_return_lam_h               0.000128   0.000010
+  beta_rqa_log_return_lam                 0.000126   0.000009
+  beta_rqa_log_return_lmax                0.000102   0.000004
+  beta_rqa_log_return_rr                 -0.000004   0.000004
+  beta_rqa_log_return_delta_lam          -0.000006   0.000003
+  beta_rqa_log_return_delta_tt           -0.000021   0.000005
+
+
+G. ABLATION — Drop each β-RQA feature from RF Std+β-RQA
+
+  Baseline AUC: 0.983690
+  Dropped Feature                            AUC         ΔAUC
+  -----------------------------------------------------------
+  ALL_RQA_removed                       0.983416    -0.000274
+  beta_rqa_log_return_delta_lam         0.983642    -0.000048
+  beta_rqa_log_return_delta_tt          0.983771    +0.000080
+  beta_rqa_log_return_det               0.983683    -0.000008
+  beta_rqa_log_return_entr              0.983690    -0.000001
+  beta_rqa_log_return_lam               0.983716    +0.000025
+  beta_rqa_log_return_lam_h             0.983766    +0.000075
+  beta_rqa_log_return_lmax              0.983698    +0.000007
+  beta_rqa_log_return_rr                0.983777    +0.000087
+  beta_rqa_log_return_tt                0.983730    +0.000040
+  beta_rqa_log_return_tt_h              0.983778    +0.000088
+
+
+================================================================================
+  INTERPRETATION (for thesis discussion)
+================================================================================
+
+  The feature importance analysis reveals which RQA measures contribute
+  to the statistically significant improvement observed in Dataset 3.
+  Examine the permutation importance and ablation results above to
+  identify: (1) which RQA features have the highest individual impact,
+  (2) whether any can be removed without loss, and (3) whether the
+  improvement is concentrated in a few measures or distributed across all.
+
+  Key questions to answer from these results:
+  - Which RQA feature has the highest permutation importance?
+  - Does removing any single RQA feature cause a notable AUC drop?
+  - Is the total RQA contribution (ALL_RQA_removed ΔAUC) larger than
+    any individual feature's contribution? (If so, features are complementary.)
+  - Do the Dreesen 2025 horizontal measures (LAM_h, TT_h, ΔLAM, ΔTT)
+    contribute meaningfully in the β-RQA model?
