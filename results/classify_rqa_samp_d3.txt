@@ -1,0 +1,51 @@
+================================================================================
+  CLASSIFICATION WITH RQA_Samp vs EXACT — DATASET 3
+  Question: Does using sampled features hurt classification?
+================================================================================
+
+
+A. POOLED PERFORMANCE
+
+  Method                      AUC       F1   RQA time    RF time
+  ------------------------------------------------------------
+  Exact                  0.983943   0.8852     345.0s     286.8s
+  Samp M=4N              0.983790   0.8847     168.7s     283.6s
+  Samp M=N               0.983612   0.8865     130.8s     284.2s
+  Samp M=0.2N            0.983612   0.8865     130.5s     282.8s
+
+
+B. PER-STOCK METRICS (mean ± std across stocks)
+
+  Method                              AUC                 F1   N stocks
+  --------------------------------------------------------------------
+  Exact                0.9880±0.0128      0.8807±0.0813        503
+  Samp M=4N            0.9878±0.0121      0.8802±0.0819        503
+  Samp M=N             0.9876±0.0131      0.8820±0.0806        503
+  Samp M=0.2N          0.9876±0.0131      0.8820±0.0806        503
+
+
+C. WILCOXON SIGNED-RANK TESTS (Exact vs Sampled, per-stock AUC)
+
+  Comparison                        Mean dAUC    Median dAUC    p-value   Sig
+  -------------------------------------------------------------------------
+  Exact vs Samp M=4N              -0.000196      -0.000050     0.0192     *
+  Exact vs Samp M=N               -0.000392      -0.000194     0.0000   ***
+  Exact vs Samp M=0.2N            -0.000392      -0.000194     0.0000   ***
+
+
+D. AUC DIFFERENCES (vs Exact)
+
+  Samp M=4N           : ΔAUC = -0.000153 (-0.0155%)
+  Samp M=N            : ΔAUC = -0.000330 (-0.0336%)
+  Samp M=0.2N         : ΔAUC = -0.000330 (-0.0336%)
+
+
+================================================================================
+  INTERPRETATION
+================================================================================
+
+  RQA_Samp at M=4N: ΔAUC = -0.000153 vs exact.
+  → Negligible impact on classification. Safe to use for 1.6× speedup.
+
+  RQA_Samp at M=N:  ΔAUC = -0.000330 vs exact.
+  RQA_Samp at M=0.2N: ΔAUC = -0.000330 vs exact.
