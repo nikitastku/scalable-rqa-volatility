@@ -17,7 +17,6 @@ from scalable_rqa_volatility.logging_utils import get_logger
 from scalable_rqa_volatility.recurrence.beta_rqa import BetaRQAConfig, beta_rqa_features_rolling
 from scalable_rqa_volatility.recurrence.embeddings import EmbeddingConfig
 
-# ── constants ──
 STD_FEATURE_COLS = [
     "ret_abs", "ret_sq", "rv",
     "ret_mean_30", "ret_std_30", "ret_abs_mean_30", "rv_mean_30", "rv_std_30",
@@ -25,11 +24,9 @@ STD_FEATURE_COLS = [
     "ret_mean_390", "ret_std_390", "ret_abs_mean_390", "rv_mean_390", "rv_std_390",
 ]
 
-# The 10 β-RQA feature suffixes (applied per input column)
 BETA_FEATURE_NAMES = ["rr", "det", "lam", "lmax", "tt", "entr",
                        "lam_h", "tt_h", "delta_lam", "delta_tt"]
 
-# The 4 horizontal measures from Deckert et al. 2025
 HORIZONTAL_SUFFIXES = ["lam_h", "tt_h", "delta_lam", "delta_tt"]
 STANDARD_RQA_SUFFIXES = ["rr", "det", "lam", "lmax", "tt", "entr"]
 
@@ -61,8 +58,6 @@ def savefig(fig, name: str):
     plt.close(fig)
     print(f"  Saved: {path}")
 
-
-# ── data helpers ──
 
 def compute_beta_rqa_per_stock(df, beta_cfg, cols):
     all_feats = []
@@ -124,8 +119,6 @@ def best_threshold(y_true, prob):
     return best_t
 
 
-# ── analysis for one beta value ──
-
 def analyse_beta(
     beta: float,
     train, val, test, full, n_tr, n_va,
@@ -144,7 +137,6 @@ def analyse_beta(
     )
     rqa_cols = ("log_return",)
 
-    # compute β-RQA features
     logger.info(f"  Computing β-RQA features (β={beta})...")
     t0 = time.time()
     X_beta_all = compute_beta_rqa_per_stock(full, beta_cfg, rqa_cols)
@@ -161,7 +153,6 @@ def analyse_beta(
     X_beta_va, y_va2 = build_xy_per_stock(val, X_beta_va_df)
     X_beta_te, y_te2 = build_xy_per_stock(test, X_beta_te_df)
 
-    # align
     ntr = min(len(y_tr), len(y_tr2))
     nva = min(len(y_va), len(y_va2))
     nte = min(len(y_te), len(y_te2))
@@ -173,7 +164,6 @@ def analyse_beta(
 
     comb_names = STD_FEATURE_COLS + beta_col_names
 
-    # train RF Std+β-RQA
     logger.info(f"  Training RF Std+β-RQA ({len(comb_names)} features)...")
     rf = RandomForestClassifier(
         n_estimators=200, min_samples_leaf=5, n_jobs=-1,
@@ -189,7 +179,6 @@ def analyse_beta(
     f1_full = f1_score(y_te_a, y_pred, zero_division=0)
     logger.info(f"  RF Std+β-RQA (β={beta}): AUC={auc_full:.6f}, F1={f1_full:.4f}")
 
-    # permutation importance on β-RQA features only
     logger.info(f"  Computing permutation importances...")
     t0 = time.time()
     perm = permutation_importance(
@@ -205,11 +194,9 @@ def analyse_beta(
         perm_dict[name] = perm.importances_mean[i]
         perm_std_dict[name] = perm.importances_std[i]
 
-    # extract β-RQA-only permutation importances
     beta_perm = {name: perm_dict[name] for name in beta_col_names}
     beta_perm_std = {name: perm_std_dict[name] for name in beta_col_names}
 
-    # classify features into standard RQA vs horizontal
     horiz_features = [n for n in beta_col_names if any(n.endswith(s) for s in HORIZONTAL_SUFFIXES)]
     std_rqa_features = [n for n in beta_col_names if any(n.endswith(s) for s in STANDARD_RQA_SUFFIXES)]
 
@@ -219,7 +206,6 @@ def analyse_beta(
     logger.info(f"  Horizontal measures total perm importance: {horiz_perm_sum:.6f}")
     logger.info(f"  Standard RQA measures total perm importance: {std_rqa_perm_sum:.6f}")
 
-    # Ablation: drop all 4 horizontal measures
     horiz_indices = [comb_names.index(n) for n in horiz_features]
     keep_cols = [i for i in range(X_comb_tr.shape[1]) if i not in horiz_indices]
 
@@ -236,7 +222,6 @@ def analyse_beta(
 
     logger.info(f"  Ablation (drop 4 horiz): AUC={auc_no_horiz:.6f} (Δ={delta_horiz:+.6f})")
 
-    # Ablation: drop ALL 10 β-RQA features (= std-only baseline)
     std_only_cols = list(range(len(STD_FEATURE_COLS)))
     rf_std = RandomForestClassifier(
         n_estimators=200, min_samples_leaf=5, n_jobs=-1,
@@ -251,8 +236,6 @@ def analyse_beta(
 
     logger.info(f"  Ablation (drop all 10 β-RQA): AUC={auc_std_only:.6f} (Δ={delta_all:+.6f})")
 
-    # Check asymmetry: LAM vs LAM_h correlation
-    # This tells us whether the RP is actually asymmetric at this beta
     lam_col = [n for n in beta_col_names if n.endswith("_lam") and not n.endswith("delta_lam")]
     lam_h_col = [n for n in beta_col_names if n.endswith("_lam_h")]
     if lam_col and lam_h_col:
@@ -293,15 +276,12 @@ def analyse_beta(
     }
 
 
-# ── plotting ──
-
 def plot_beta_sweep_horizontal(results_list, fig_name):
     """Main figure: horizontal measure importance across β values."""
     betas = [r["beta"] for r in results_list]
 
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 
-    # Panel A: Total permutation importance of horizontal vs standard RQA
     ax = axes[0, 0]
     horiz_sums = [r["horiz_perm_sum"] for r in results_list]
     std_sums = [r["std_rqa_perm_sum"] for r in results_list]
@@ -317,7 +297,6 @@ def plot_beta_sweep_horizontal(results_list, fig_name):
     ax.grid(axis="y", alpha=0.3)
     ax.axhline(0, color="black", linewidth=0.5)
 
-    # Panel B: Ablation — drop horizontal measures
     ax = axes[0, 1]
     deltas = [r["delta_horiz"] for r in results_list]
     colors_bar = [COLORS["green"] if d > 0 else COLORS["red"] for d in deltas]
@@ -332,7 +311,6 @@ def plot_beta_sweep_horizontal(results_list, fig_name):
         ax.text(i, d + (0.00002 if d >= 0 else -0.00005), f"{d:+.5f}",
                 ha="center", fontsize=9, color=COLORS["primary"])
 
-    # Panel C: LAM vs LAM_h correlation (measures RP asymmetry)
     ax = axes[1, 0]
     corrs = [r["lam_lam_h_corr"] for r in results_list]
     ax.bar(x, corrs, 0.5, color=COLORS["orange"])
@@ -347,9 +325,7 @@ def plot_beta_sweep_horizontal(results_list, fig_name):
     for i, c in enumerate(corrs):
         ax.text(i, c + 0.02, f"{c:.3f}", ha="center", fontsize=9)
 
-    # Panel D: Per-feature importance at each beta (heatmap style)
     ax = axes[1, 1]
-    # show only the 4 horizontal features across betas
     horiz_names_short = ["LAM_h", "TT_h", "ΔLAM", "ΔTT"]
     horiz_data = np.zeros((len(horiz_names_short), len(betas)))
     for j, r in enumerate(results_list):
@@ -366,7 +342,6 @@ def plot_beta_sweep_horizontal(results_list, fig_name):
     ax.set_title("D. Horizontal Feature Importance by β")
     fig.colorbar(im, ax=ax, label="Perm ΔAUC", shrink=0.8)
 
-    # annotate cells
     for i in range(len(horiz_names_short)):
         for j in range(len(betas)):
             val = horiz_data[i, j]
@@ -378,8 +353,6 @@ def plot_beta_sweep_horizontal(results_list, fig_name):
     fig.tight_layout()
     savefig(fig, fig_name)
 
-
-# ── main ──
 
 def main():
     logger = get_logger()
@@ -396,7 +369,6 @@ def main():
     print("  Question: Do horizontal measures help when RP is asymmetric (β≠2)?")
     print("=" * 70)
 
-    # Load data
     logger.info("Loading D3 splits...")
     train = load_split("train")
     val = load_split("val")
@@ -405,13 +377,11 @@ def main():
     n_tr, n_va = len(train), len(val)
     logger.info(f"Train: {n_tr:,}, Val: {n_va:,}, Test: {len(test):,}")
 
-    # Standard features (shared across all betas)
     logger.info("Building standard feature arrays...")
     X_std_tr, y_tr = build_xy_per_stock(train, train[STD_FEATURE_COLS].copy())
     X_std_va, y_va = build_xy_per_stock(val, val[STD_FEATURE_COLS].copy())
     X_std_te, y_te = build_xy_per_stock(test, test[STD_FEATURE_COLS].copy())
 
-    # Run analysis for each beta
     results_list = []
     for beta in betas:
         result = analyse_beta(
@@ -421,11 +391,9 @@ def main():
         )
         results_list.append(result)
 
-    # Generate figure
     print("\n--- Generating figures ---")
     plot_beta_sweep_horizontal(results_list, "6_4_beta_sweep_horizontal_importance")
 
-    # Save text results
     out_dir = repo_root() / "results"
     out_dir.mkdir(exist_ok=True)
     out_path = out_dir / "feature_importance_beta_sweep_d3.txt"
@@ -436,7 +404,6 @@ def main():
     lines.append("  Question: Do horizontal measures help when RP is asymmetric (β≠2)?")
     lines.append("=" * 80)
 
-    # Summary table
     lines.append(f"\n\nA. SUMMARY ACROSS β VALUES\n")
     lines.append(f"  {'β':>5} {'AUC (full)':>12} {'AUC (no horiz)':>16} {'Δ (drop horiz)':>16} "
                  f"{'Horiz perm Σ':>14} {'Std RQA perm Σ':>16} {'LAM↔LAM_h corr':>16}")
@@ -449,7 +416,6 @@ def main():
             f"{r['std_rqa_perm_sum']:>16.6f} {r['lam_lam_h_corr']:>16.4f}"
         )
 
-    # Per-beta detailed results
     for r in results_list:
         lines.append(f"\n\n{'='*60}")
         lines.append(f"  β = {r['beta']}")
@@ -469,12 +435,10 @@ def main():
             std = r["beta_perm_std"][name]
             lines.append(f"  {name:<40} {val:>12.6f} {std:>10.6f} {ftype:>12}")
 
-    # Interpretation
     lines.append(f"\n\n{'='*80}")
     lines.append(f"  INTERPRETATION")
     lines.append(f"{'='*80}\n")
 
-    # Check if any beta shows horizontal measures helping
     any_horiz_helps = any(r["delta_horiz"] < -0.0001 for r in results_list)
     any_asymmetric = any(r["lam_lam_h_corr"] < 0.95 for r in results_list)
 

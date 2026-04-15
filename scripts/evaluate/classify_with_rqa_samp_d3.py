@@ -11,13 +11,6 @@ This script answers that directly:
   3. Train RF Std+RQA with each feature set
   4. Compare AUC, F1, and per-stock metrics
   5. Also run Wilcoxon signed-rank test: exact vs sampled
-
-Output:
-  - results/classify_rqa_samp_d3.txt
-  - figures/8_1_samp_vs_exact_classification.png
-
-Usage:
-  python scripts/evaluate/classify_with_rqa_samp_d3.py
 """
 from __future__ import annotations
 
@@ -41,14 +34,10 @@ from scalable_rqa_volatility.recurrence.rqa import (
     _epsilon_for_rr,
 )
 
-# Import the RQA_Samp windowed function from our benchmark script
-# We inline it here to keep this script self-contained
 from scalable_rqa_volatility.recurrence.rqa import (
     _recurrence_matrix, _delay_embed_joint, _standardize_cols,
 )
 
-
-# ── constants ──
 STD_FEATURE_COLS = [
     "ret_abs", "ret_sq", "rv",
     "ret_mean_30", "ret_std_30", "ret_abs_mean_30", "rv_mean_30", "rv_std_30",
@@ -85,8 +74,6 @@ def savefig(fig, name: str):
     print(f"  Saved: {path}")
 
 
-# ── RQA_Samp (inlined from benchmark script, post-fix version) ──
-
 def rqa_samp_single(X, eps, M, lmin=2, vmin=2, seed=42):
     """Sampled RQA with corrected DET/LAM estimation."""
     n = X.shape[0]
@@ -121,7 +108,6 @@ def rqa_samp_single(X, eps, M, lmin=2, vmin=2, seed=42):
             continue
         sampled_recurrent += 1
 
-        # diagonal line
         di, dj = i, j
         while di > 0 and dj > 0 and is_recurrent(di - 1, dj - 1):
             di -= 1
@@ -140,7 +126,6 @@ def rqa_samp_single(X, eps, M, lmin=2, vmin=2, seed=42):
                 diag_lengths.append(length)
         sample_diag_lengths.append(diag_length_cache.get(diag_key, 0))
 
-        # vertical line
         vi = i
         while vi > 0 and vi - 1 != j and is_recurrent(vi - 1, j):
             vi -= 1
@@ -219,8 +204,6 @@ def rqa_samp_features_rolling(df, cols, cfg, M_factor, prefix, eps_fixed=None):
     out = pd.DataFrame(out_np, index=df.index, columns=out_cols)
     return out.ffill()
 
-
-# ── data helpers ──
 
 def compute_rqa_per_stock(df, rqa_cfg, rqa_cols, eps_fixed, method="exact", M_factor=4.0):
     """Compute RQA per stock — exact or sampled."""
@@ -315,8 +298,6 @@ def per_stock_metrics(y_true, y_score, y_pred, tickers):
     return np.array(stock_aucs), np.array(stock_f1s), valid_tickers
 
 
-# ── train and evaluate ──
-
 def train_evaluate(name, Xtr, ytr, Xva, yva, Xte, yte, tickers_te, logger):
     """Train RF, tune threshold, evaluate on test set with per-stock metrics."""
     rf = RandomForestClassifier(
@@ -356,8 +337,6 @@ def train_evaluate(name, Xtr, ytr, Xva, yva, Xte, yte, tickers_te, logger):
     }
 
 
-# ── plotting ──
-
 def plot_comparison(results_dict, fig_name):
     """Compare classification performance across feature computation methods."""
     fig, axes = plt.subplots(1, 3, figsize=(16, 5))
@@ -365,7 +344,6 @@ def plot_comparison(results_dict, fig_name):
     names = list(results_dict.keys())
     colors_list = [COLORS["accent"], COLORS["green"], COLORS["purple"], COLORS["orange"]]
 
-    # Panel A: Pooled AUC comparison
     ax = axes[0]
     aucs = [results_dict[n]["auc_pooled"] for n in names]
     bars = ax.barh(range(len(names)), aucs, color=colors_list[:len(names)],
@@ -380,7 +358,6 @@ def plot_comparison(results_dict, fig_name):
         ax.text(auc + 0.0001, bar.get_y() + bar.get_height() / 2,
                 f"{auc:.6f}", va="center", fontsize=9)
 
-    # Panel B: Per-stock AUC distributions
     ax = axes[1]
     data = [results_dict[n]["per_stock_aucs"] for n in names]
     bp = ax.boxplot(data, labels=names, vert=True, patch_artist=True)
@@ -391,14 +368,12 @@ def plot_comparison(results_dict, fig_name):
     ax.set_title("B. Per-Stock AUC Distribution")
     ax.grid(axis="y", alpha=0.3)
 
-    # Panel C: ΔAUC vs exact (per-stock)
     ax = axes[2]
     exact_aucs = results_dict[names[0]]["per_stock_aucs"]
     exact_valid = results_dict[names[0]]["valid_tickers"]
     for i, n in enumerate(names[1:], 1):
         samp_aucs = results_dict[n]["per_stock_aucs"]
         samp_valid = results_dict[n]["valid_tickers"]
-        # align stocks
         common = sorted(set(exact_valid) & set(samp_valid))
         idx_e = {t: j for j, t in enumerate(exact_valid)}
         idx_s = {t: j for j, t in enumerate(samp_valid)}
@@ -417,8 +392,6 @@ def plot_comparison(results_dict, fig_name):
     savefig(fig, fig_name)
 
 
-# ── main ──
-
 def main():
     logger = get_logger()
 
@@ -427,7 +400,6 @@ def main():
     print("  Question: Does using sampled features hurt classification?")
     print("=" * 70)
 
-    # Load data
     logger.info("Loading D3 splits...")
     train = load_split("train")
     val = load_split("val")
@@ -440,7 +412,6 @@ def main():
                         embed=EmbeddingConfig(m=4, tau=2), mode="joint")
     rqa_cols = ("log_return", "rv")
 
-    # Estimate epsilon from training data
     tickers = sorted(train["ticker"].unique())
     sample_tickers = tickers[:min(10, len(tickers))]
     sample_blocks = [train[train["ticker"] == t][list(rqa_cols)].to_numpy(dtype=float)
@@ -448,13 +419,11 @@ def main():
     eps_fixed = estimate_epsilon_from_train(np.concatenate(sample_blocks), rqa_cfg)
     logger.info(f"Epsilon: {eps_fixed:.6f}")
 
-    # Standard features
     logger.info("Building standard feature arrays...")
     X_std_tr, y_tr, tickers_tr = build_xy_per_stock(train, train[STD_FEATURE_COLS].copy())
     X_std_va, y_va, tickers_va = build_xy_per_stock(val, val[STD_FEATURE_COLS].copy())
     X_std_te, y_te, tickers_te = build_xy_per_stock(test, test[STD_FEATURE_COLS].copy())
 
-    # ── Compute RQA features with different methods ──
     methods = [
         ("Exact", "exact", None),
         ("Samp M=4N", "samp", 4.0),
@@ -484,7 +453,6 @@ def main():
         X_rqa_va, y_va2, _ = build_xy_per_stock(val, X_rqa_va_df)
         X_rqa_te, y_te2, tickers_te2 = build_xy_per_stock(test, X_rqa_te_df)
 
-        # align
         ntr = min(len(y_tr), len(y_tr2))
         nva = min(len(y_va), len(y_va2))
         nte = min(len(y_te), len(y_te2))
@@ -502,7 +470,6 @@ def main():
         result["comp_time"] = comp_time
         results_dict[method_name] = result
 
-    # ── Wilcoxon tests: exact vs each sampled variant ──
     logger.info("\n--- Wilcoxon signed-rank tests (per-stock AUC) ---")
 
     exact_r = results_dict["Exact"]
@@ -536,11 +503,9 @@ def main():
         logger.info(f"  Exact vs {samp_name}: mean dAUC={np.mean(diff):+.6f}, "
                     f"median={np.median(diff):+.6f}, p={p_two:.4f} {sig}")
 
-    # ── Generate figure ──
     print("\n--- Generating figures ---")
     plot_comparison(results_dict, "8_1_samp_vs_exact_classification")
 
-    # ── Save text results ──
     out_dir = repo_root() / "results"
     out_dir.mkdir(exist_ok=True)
     out_path = out_dir / "classify_rqa_samp_d3.txt"
@@ -575,7 +540,6 @@ def main():
         lines.append(f"  Exact vs {samp_name:<19} {w['mean_diff']:>+12.6f} "
                      f"{w['median_diff']:>+14.6f} {w['p_value']:>10.4f} {w['sig']:>5}")
 
-    # AUC differences
     lines.append(f"\n\nD. AUC DIFFERENCES (vs Exact)\n")
     exact_auc = results_dict["Exact"]["auc_pooled"]
     for name, r in results_dict.items():
@@ -589,7 +553,6 @@ def main():
     lines.append(f"  INTERPRETATION")
     lines.append(f"{'='*80}\n")
 
-    # Auto-interpret
     samp4_delta = results_dict["Samp M=4N"]["auc_pooled"] - exact_auc
     samp1_delta = results_dict["Samp M=N"]["auc_pooled"] - exact_auc
     samp02_delta = results_dict["Samp M=0.2N"]["auc_pooled"] - exact_auc

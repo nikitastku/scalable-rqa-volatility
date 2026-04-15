@@ -134,7 +134,7 @@ G. ABLATION — Drop each β-RQA feature from RF Std+β-RQA
 
 
 ================================================================================
-  INTERPRETATION (for thesis discussion)
+  INTERPRETATION
 ================================================================================
 
   The feature importance analysis reveals which RQA measures contribute

@@ -200,6 +200,3 @@ A. SUMMARY ACROSS β VALUES
     β=1.0: dropping horizontal costs -0.000201 AUC
     β=1.5: dropping horizontal costs -0.000100 AUC
     β=4.0: dropping horizontal costs -0.000104 AUC
-
-  Note: Citation should be Deckert et al. (2025), not Dreesen (2025).
-  (Corrected per supervisor feedback.)
