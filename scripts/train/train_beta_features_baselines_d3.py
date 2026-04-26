@@ -1,9 +1,3 @@
-"""
-train_beta_features_baselines_d3.py — β-RQA baselines for Dataset 3 (intraday multi-stock).
-
-Same structure as train_features_baselines_d3.py but uses β-RQA with
-10 features (incl. horizontal measures from Dreesen 2025).
-"""
 from __future__ import annotations
 
 import argparse
@@ -135,21 +129,49 @@ def main() -> None:
     parser.add_argument("--m", type=int, default=4)
     parser.add_argument("--tau", type=int, default=2)
     parser.add_argument("--rr", type=float, default=0.1)
+    parser.add_argument(
+        "--mode", type=str, default="per_series",
+        choices=["per_series", "joint"],
+        help="β-RQA embedding mode. 'per_series' (default, legacy) computes "
+             "features per channel; 'joint' uses a single multivariate "
+             "delay embedding so the result is comparable to standard RQA "
+             "with mode=joint.",
+    )
+    parser.add_argument(
+        "--rqa_cols", type=str, nargs="+", default=["log_return"],
+        help="Columns used as input channels for β-RQA. Default: ['log_return']. "
+             "Use --rqa_cols log_return rv to match standard RQA's input.",
+    )
+    parser.add_argument(
+        "--max_tickers", type=int, default=None,
+        help="Use only the first N tickers (alphabetically). For quick testing.",
+    )
     args = parser.parse_args()
 
     beta_cfg = BetaRQAConfig(
         window=60, step=20, recurrence_rate=args.rr,
         embed=EmbeddingConfig(m=args.m, tau=args.tau),
         beta=args.beta, transform="minmax",
+        mode=args.mode,
     )
-    rqa_cols = ("log_return",)
+    rqa_cols = tuple(args.rqa_cols)
 
     logger.info({"beta": args.beta, "m": args.m, "tau": args.tau,
-                 "rr": args.rr, "window": beta_cfg.window, "step": beta_cfg.step})
+                 "rr": args.rr, "window": beta_cfg.window, "step": beta_cfg.step,
+                 "mode": args.mode, "rqa_cols": list(rqa_cols)})
 
     train = load_split("train")
     val = load_split("val")
     test = load_split("test")
+    if args.max_tickers is not None:
+        all_tickers = sorted(set(train["ticker"].unique())
+                             & set(val["ticker"].unique())
+                             & set(test["ticker"].unique()))
+        keep = all_tickers[:args.max_tickers]
+        train = train[train["ticker"].isin(keep)].reset_index(drop=True)
+        val = val[val["ticker"].isin(keep)].reset_index(drop=True)
+        test = test[test["ticker"].isin(keep)].reset_index(drop=True)
+        logger.info(f"Subsampled to {len(keep)} tickers for testing")
     logger.info(f"Train: {len(train):,}, Val: {len(val):,}, Test: {len(test):,}")
 
     X_std_train = train[STD_FEATURE_COLS].copy()

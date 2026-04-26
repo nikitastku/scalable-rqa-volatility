@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable
+from typing import Iterable, Literal
 
 import numpy as np
 import pandas as pd
@@ -13,7 +13,11 @@ from scalable_rqa_volatility.recurrence.rqa import (
     _recurrence_matrix,
     _diag_line_lengths,
     _vert_line_lengths,
+    _delay_embed_joint,
 )
+
+
+Mode = Literal["per_series", "joint"]
 
 
 @dataclass(frozen=True)
@@ -28,6 +32,7 @@ class BetaRQAConfig:
     beta: float = 1.0
     eps: float = 1e-10
     transform: str = "minmax"
+    mode: Mode = "per_series" 
 
 
 def _minmax_pos(x: np.ndarray, eps: float) -> np.ndarray:
@@ -38,6 +43,17 @@ def _minmax_pos(x: np.ndarray, eps: float) -> np.ndarray:
         return np.full_like(x, 1.0, dtype=float)
     y = (x - mn) / (mx - mn)
     return y * (1.0 - eps) + eps
+
+
+def _minmax_pos_cols(W: np.ndarray, eps: float) -> np.ndarray:
+    """Apply min-max to [eps, 1] independently to each column of a 2D array."""
+    W = np.asarray(W, dtype=float)
+    if W.ndim != 2:
+        raise ValueError("_minmax_pos_cols expects 2D input.")
+    out = np.empty_like(W)
+    for j in range(W.shape[1]):
+        out[:, j] = _minmax_pos(W[:, j], eps=eps)
+    return out
 
 
 def _pairwise_beta_distances(X: np.ndarray, beta: float, eps: float) -> np.ndarray:
@@ -80,7 +96,7 @@ def _pairwise_beta_distances(X: np.ndarray, beta: float, eps: float) -> np.ndarr
 
 def _horiz_line_lengths(R: np.ndarray) -> np.ndarray:
     """
-    NEW: horizontal line lengths from rows of the recurrence matrix.
+    Horizontal line lengths from rows of the recurrence matrix.
     For symmetric RPs (β=2), these equal vertical line lengths.
     For asymmetric β-RPs (β≠2), they capture different structure.
     From Dreesen et al. 2025, Section IV.B.
@@ -88,7 +104,6 @@ def _horiz_line_lengths(R: np.ndarray) -> np.ndarray:
     lengths: list[int] = []
     for i in range(R.shape[0]):
         row = R[i, :]
-        # run-length encoding on this row
         if row.size == 0:
             continue
         diff = np.diff(row.astype(np.int8))
@@ -104,53 +119,43 @@ def _horiz_line_lengths(R: np.ndarray) -> np.ndarray:
     return np.asarray(lengths, dtype=int)
 
 
-def beta_rqa_features_from_series(x: np.ndarray, cfg: BetaRQAConfig) -> dict[str, float]:
-    x = np.asarray(x, dtype=float).reshape(-1)
-
-    if cfg.transform == "minmax":
-        x = _minmax_pos(x, eps=cfg.eps)
-    elif cfg.transform != "none":
-        raise ValueError("transform must be 'minmax' or 'none'")
-
-    X = delay_embed(x, cfg.embed)
-
-    # β=2 => Euclidean (symmetric), use fast path
+def _beta_rqa_metrics_from_embedded(X: np.ndarray, cfg: BetaRQAConfig) -> dict[str, float]:
+    """
+    Compute the 10 β-RQA features from an already-embedded point matrix X
+    (rows = embedded points, cols = embedding dimension).
+    Shared core for both per-series and joint code paths.
+    """
     if np.isclose(cfg.beta, 2.0):
         D = _pairwise_distances(X)
     else:
         D = _pairwise_beta_distances(X, beta=cfg.beta, eps=cfg.eps)
 
-    eps = _epsilon_for_rr(D, cfg.recurrence_rate, cfg.exclude_diagonal)
-    R = _recurrence_matrix(D, eps, cfg.exclude_diagonal)
+    eps_val = _epsilon_for_rr(D, cfg.recurrence_rate, cfg.exclude_diagonal)
+    R = _recurrence_matrix(D, eps_val, cfg.exclude_diagonal)
 
     n = R.shape[0]
     total_pairs = n * (n - 1) if cfg.exclude_diagonal else n * n
     Rsum = int(R.sum())
     rr = float(Rsum / max(total_pairs, 1))
 
-    # --- diagonal lines ---
     diag = _diag_line_lengths(R)
     diag_ge = diag[diag >= cfg.lmin]
     det = float(diag_ge.sum() / max(Rsum, 1))
     lmax = float(diag_ge.max()) if diag_ge.size else 0.0
 
-    # --- vertical lines ---
     vert = _vert_line_lengths(R)
     vert_ge = vert[vert >= cfg.vmin]
     lam = float(vert_ge.sum() / max(Rsum, 1))
     tt = float(vert_ge.mean()) if vert_ge.size else 0.0
 
-    # --- NEW: horizontal lines (Dreesen 2025) ---
     horiz = _horiz_line_lengths(R)
     horiz_ge = horiz[horiz >= cfg.vmin]
     lam_h = float(horiz_ge.sum() / max(Rsum, 1))
     tt_h = float(horiz_ge.mean()) if horiz_ge.size else 0.0
 
-    # --- NEW: asymmetry measures (Dreesen 2025, Table I) ---
     delta_lam = abs(lam - lam_h)
     delta_tt = abs(tt - tt_h)
 
-    # --- entropy ---
     entr = 0.0
     if diag_ge.size:
         counts = np.bincount(diag_ge)
@@ -162,6 +167,35 @@ def beta_rqa_features_from_series(x: np.ndarray, cfg: BetaRQAConfig) -> dict[str
         "rr": rr, "det": det, "lam": lam, "lmax": lmax, "tt": tt, "entr": entr,
         "lam_h": lam_h, "tt_h": tt_h, "delta_lam": delta_lam, "delta_tt": delta_tt,
     }
+
+
+def beta_rqa_features_from_series(x: np.ndarray, cfg: BetaRQAConfig) -> dict[str, float]:
+    """Single-series β-RQA features. Used by 'per_series' mode."""
+    x = np.asarray(x, dtype=float).reshape(-1)
+
+    if cfg.transform == "minmax":
+        x = _minmax_pos(x, eps=cfg.eps)
+    elif cfg.transform != "none":
+        raise ValueError("transform must be 'minmax' or 'none'")
+
+    X = delay_embed(x, cfg.embed)
+    return _beta_rqa_metrics_from_embedded(X, cfg)
+
+
+def beta_rqa_features_from_window_joint(W: np.ndarray, cfg: BetaRQAConfig) -> dict[str, float]:
+    W = np.asarray(W, dtype=float)
+    if W.ndim != 2:
+        raise ValueError("beta_rqa_features_from_window_joint expects 2D (window_len, d).")
+
+    if cfg.transform == "minmax":
+        W_norm = _minmax_pos_cols(W, eps=cfg.eps)
+    elif cfg.transform == "none":
+        W_norm = W
+    else:
+        raise ValueError("transform must be 'minmax' or 'none'")
+
+    X = _delay_embed_joint(W_norm, cfg.embed) 
+    return _beta_rqa_metrics_from_embedded(X, cfg)
 
 
 def beta_rqa_features_rolling(
@@ -177,14 +211,31 @@ def beta_rqa_features_rolling(
         raise ValueError("step must be >= 1")
 
     n = len(df)
-    # IMPROVED: 10 features instead of 6
-    feature_names = ["rr", "det", "lam", "lmax", "tt", "entr", "lam_h", "tt_h", "delta_lam", "delta_tt"]
+    feature_names = [
+        "rr", "det", "lam", "lmax", "tt", "entr",
+        "lam_h", "tt_h", "delta_lam", "delta_tt",
+    ]
+    arr = df[cols].to_numpy(dtype=float, copy=False)
+    start_t = cfg.window - 1
+
+    if cfg.mode == "joint":
+        out_cols = [f"{prefix}_joint_{f}" for f in feature_names]
+        out_np = np.full((n, len(out_cols)), np.nan, dtype=float)
+
+        for t in range(start_t, n, cfg.step):
+            w0 = t - cfg.window + 1
+            w1 = t + 1
+            W = arr[w0:w1, :]
+            feats = beta_rqa_features_from_window_joint(W, cfg)
+            for fi, f in enumerate(feature_names):
+                out_np[t, fi] = float(feats[f])
+
+        out = pd.DataFrame(out_np, index=df.index, columns=out_cols)
+        return out.ffill()
+
     out_cols = [f"{prefix}_{c}_{f}" for c in cols for f in feature_names]
     out_np = np.full((n, len(out_cols)), np.nan, dtype=float)
 
-    arr = df[cols].to_numpy(dtype=float, copy=False)
-
-    start_t = cfg.window - 1
     for t in range(start_t, n, cfg.step):
         w0 = t - cfg.window + 1
         w1 = t + 1
