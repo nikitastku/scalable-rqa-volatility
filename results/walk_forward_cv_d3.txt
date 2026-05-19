@@ -1,0 +1,35 @@
+==============================================================================
+WALK-FORWARD CV ROBUSTNESS — D3
+==============================================================================
+
+Tickers used: 50 (seed 42)
+Folds: 5 expanding-window origins in [0.60, 0.88]
+Embargo: 60 bars between train end and test start
+Purge horizon: 390 bars
+epsilon: 1.07 (estimated from early-period pooled sample)
+
+ Fold   Origin     N_train     N_test    AUC Std    AUC +RQA       ΔAUC
+---------------------------------------------------------------------------
+    1     0.60     138,532     29,519     0.9646      0.9669   +0.00232
+    2     0.67     159,239     29,519     0.9628      0.9638   +0.00097
+    3     0.74     179,952     29,519     0.9718      0.9732   +0.00145
+    4     0.81     200,669     29,519     0.9733      0.9749   +0.00165
+    5     0.88     221,383     29,519     0.9775      0.9799   +0.00243
+
+==============================================================================
+AGGREGATED
+==============================================================================
+Mean ΔAUC = +0.00176
+SE        = 0.00027
+n_folds   = 5
+Wilcoxon (H1: ΔAUC > 0):  p = 0.03125
+
+Reference: headline single-chronological-split ΔAUC was +0.00057
+           (per-stock Wilcoxon p < 0.001, full 503-ticker panel).
+
+INTERPRETATION
+------------------------------------------------------------------------------
+If mean ΔAUC > 0 and Wilcoxon p < 0.05: the RQA gain is robust to
+split protocol; it reproduces under purged walk-forward CV (López
+de Prado 2018), addressing Philippe's concern about reliance on a
+single chronological split.

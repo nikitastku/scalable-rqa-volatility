@@ -41,8 +41,8 @@ def load_split(dataset: int, name: str) -> pd.DataFrame:
 
 
 def savefig(fig, name: str):
-    out_dir = repo_root() / "figures"
-    out_dir.mkdir(exist_ok=True)
+    out_dir = repo_root() / "figures" / "general_figures"
+    out_dir.mkdir(parents=True, exist_ok=True)
     path = out_dir / f"{name}.png"
     fig.savefig(path)
     plt.close(fig)
@@ -196,7 +196,7 @@ def main():
     plot_distribution_shift_comparison()
 
     print("\n" + "=" * 60)
-    print(f"  FIGURES SAVED TO: {repo_root() / 'figures'}")
+    print(f"  FIGURES SAVED TO: {repo_root() / 'figures' / 'general_figures'}")
     print("=" * 60)
 
 

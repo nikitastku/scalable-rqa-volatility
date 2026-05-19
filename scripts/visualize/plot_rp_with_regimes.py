@@ -389,7 +389,7 @@ def fig_c_rqa_distributions(out_dir: Path, n_tickers: int = 30) -> None:
 
 
 def main() -> None:
-    out_dir = repo_root() / "figures" / "checkpoint_followup"
+    out_dir = repo_root() / "figures" / "recurrence_plots"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     fig_a_calm_vs_vol(out_dir)
