@@ -7,6 +7,17 @@ name = "scalable-rqa-volatility"
 version = "0.1.0"
 description = "Scalable RQA for volatility regime prediction"
 requires-python = ">=3.12"
+dependencies = [
+    "numpy",
+    "pandas",
+    "pyarrow",
+    "scipy",
+    "scikit-learn",
+    "matplotlib",
+    "arch",
+    "torch",
+    "yfinance",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
