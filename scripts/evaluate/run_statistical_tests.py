@@ -151,7 +151,6 @@ def build_xy_d12(df, X_df, label_col="regime"):
 
 
 def run_d12(dataset: int, logger):
-    """Run statistical tests for Dataset 1 or 2."""
     logger.info(f"=== DATASET {dataset} STATISTICAL TESTS ===")
 
     train = load_split(dataset, "train").reset_index(drop=True)
@@ -185,22 +184,9 @@ def run_d12(dataset: int, logger):
     X_rqa_va = X_rqa_full.iloc[n_tr:n_tr+n_va].reset_index(drop=True)
     X_rqa_te = X_rqa_full.iloc[n_tr+n_va:].reset_index(drop=True)
 
-    best_beta = 4.0 if dataset == 2 else 1.5
-    beta_cfg = BetaRQAConfig(window=90, step=5, recurrence_rate=0.1,
-                             embed=EmbeddingConfig(m=4, tau=2),
-                             beta=best_beta, transform="minmax")
-    X_beta_full = beta_rqa_features_rolling(full, ("log_return",), beta_cfg, prefix="beta_rqa")
-    X_beta_tr = X_beta_full.iloc[:n_tr].reset_index(drop=True)
-    X_beta_va = X_beta_full.iloc[n_tr:n_tr+n_va].reset_index(drop=True)
-    X_beta_te = X_beta_full.iloc[n_tr+n_va:].reset_index(drop=True)
-
     Xtr_rqa, ytr_rqa = build_xy_d12(train, X_rqa_tr)
     Xva_rqa, yva_rqa = build_xy_d12(val, X_rqa_va)
     Xte_rqa, yte_rqa = build_xy_d12(test, X_rqa_te)
-
-    Xtr_beta, ytr_beta = build_xy_d12(train, X_beta_tr)
-    Xva_beta, yva_beta = build_xy_d12(val, X_beta_va)
-    Xte_beta, yte_beta = build_xy_d12(test, X_beta_te)
 
     def align(*arrays_and_ys):
         n = min(len(a) for a in arrays_and_ys)
@@ -210,21 +196,45 @@ def run_d12(dataset: int, logger):
     Xva_std_a, Xva_rqa_a, yva_a = align(Xva_std, Xva_rqa, yva)
     Xte_std_a, Xte_rqa_a, yte_a = align(Xte_std, Xte_rqa, yte)
 
-    Xtr_std_b, Xtr_beta_b, ytr_b = align(Xtr_std, Xtr_beta, ytr)
-    Xva_std_b, Xva_beta_b, yva_b = align(Xva_std, Xva_beta, yva)
-    Xte_std_b, Xte_beta_b, yte_b = align(Xte_std, Xte_beta, yte)
-
     Xtr_comb_rqa = np.concatenate([Xtr_std_a, Xtr_rqa_a], axis=1)
     Xva_comb_rqa = np.concatenate([Xva_std_a, Xva_rqa_a], axis=1)
     Xte_comb_rqa = np.concatenate([Xte_std_a, Xte_rqa_a], axis=1)
 
-    Xtr_comb_beta = np.concatenate([Xtr_std_b, Xtr_beta_b], axis=1)
-    Xva_comb_beta = np.concatenate([Xva_std_b, Xva_beta_b], axis=1)
-    Xte_comb_beta = np.concatenate([Xte_std_b, Xte_beta_b], axis=1)
+    beta_values = [4.0, 5.0] if dataset == 2 else [1.5]
+    beta_runs = {}
+
+    for beta_value in beta_values:
+        logger.info(f"Computing β-RQA features (β={beta_value})...")
+        beta_cfg = BetaRQAConfig(window=90, step=5, recurrence_rate=0.1,
+                                 embed=EmbeddingConfig(m=4, tau=2),
+                                 beta=beta_value, transform="minmax")
+        X_beta_full = beta_rqa_features_rolling(
+            full, ("log_return",), beta_cfg, prefix="beta_rqa")
+        X_beta_tr = X_beta_full.iloc[:n_tr].reset_index(drop=True)
+        X_beta_va = X_beta_full.iloc[n_tr:n_tr+n_va].reset_index(drop=True)
+        X_beta_te = X_beta_full.iloc[n_tr+n_va:].reset_index(drop=True)
+
+        Xtr_beta, ytr_beta = build_xy_d12(train, X_beta_tr)
+        Xva_beta, yva_beta = build_xy_d12(val, X_beta_va)
+        Xte_beta, yte_beta = build_xy_d12(test, X_beta_te)
+
+        Xtr_std_b, Xtr_beta_b, ytr_b = align(Xtr_std, Xtr_beta, ytr)
+        Xva_std_b, Xva_beta_b, yva_b = align(Xva_std, Xva_beta, yva)
+        Xte_std_b, Xte_beta_b, yte_b = align(Xte_std, Xte_beta, yte)
+
+        beta_runs[beta_value] = {
+            "Xtr": np.concatenate([Xtr_std_b, Xtr_beta_b], axis=1),
+            "Xva": np.concatenate([Xva_std_b, Xva_beta_b], axis=1),
+            "Xte": np.concatenate([Xte_std_b, Xte_beta_b], axis=1),
+            "ytr": ytr_b,
+            "yva": yva_b,
+            "yte": yte_b,
+        }
 
     predictions = {}
+    display_names = {}
 
-    def train_and_predict(name, model, Xtr, ytr, Xva, yva, Xte, yte):
+    def train_and_predict(name, model, Xtr, ytr, Xva, yva, Xte, yte, display_name=None):
         model.fit(Xtr, ytr)
         p_va = model.predict_proba(Xva)[:, 1]
         thr = best_threshold(yva, p_va)
@@ -234,7 +244,8 @@ def run_d12(dataset: int, logger):
         f1 = f1_score(yte, pred, zero_division=0)
         predictions[name] = {"y_true": yte, "y_score": p_te, "y_pred": pred,
                              "auc": auc, "f1": f1, "threshold": thr}
-        logger.info(f"  {name}: AUC={auc:.4f}, F1={f1:.4f}")
+        display_names[name] = display_name or name
+        logger.info(f"  {display_names[name]}: AUC={auc:.4f}, F1={f1:.4f}")
 
     rf = lambda: RandomForestClassifier(n_estimators=400, min_samples_leaf=2,
                                         n_jobs=-1, class_weight="balanced_subsample", random_state=42)
@@ -244,10 +255,21 @@ def run_d12(dataset: int, logger):
     logger.info("Training models...")
     train_and_predict("rf_std", rf(), Xtr_std, ytr, Xva_std, yva, Xte_std, yte)
     train_and_predict("rf_std_rqa", rf(), Xtr_comb_rqa, ytr_a, Xva_comb_rqa, yva_a, Xte_comb_rqa, yte_a)
-    train_and_predict("rf_std_beta", rf(), Xtr_comb_beta, ytr_b, Xva_comb_beta, yva_b, Xte_comb_beta, yte_b)
+
+    for beta_value, run in beta_runs.items():
+        suffix = str(beta_value).replace(".", "_")
+        name = "rf_std_beta" if len(beta_values) == 1 else f"rf_std_beta_b{suffix}"
+        label = "rf_std_beta" if len(beta_values) == 1 else f"rf_std_beta (β={beta_value})"
+        train_and_predict(name, rf(), run["Xtr"], run["ytr"], run["Xva"], run["yva"], run["Xte"], run["yte"], label)
+
     train_and_predict("lr_std", lr(), Xtr_std, ytr, Xva_std, yva, Xte_std, yte)
     train_and_predict("lr_std_rqa", lr(), Xtr_comb_rqa, ytr_a, Xva_comb_rqa, yva_a, Xte_comb_rqa, yte_a)
-    train_and_predict("lr_std_beta", lr(), Xtr_comb_beta, ytr_b, Xva_comb_beta, yva_b, Xte_comb_beta, yte_b)
+
+    for beta_value, run in beta_runs.items():
+        suffix = str(beta_value).replace(".", "_")
+        name = "lr_std_beta" if len(beta_values) == 1 else f"lr_std_beta_b{suffix}"
+        label = "lr_std_beta" if len(beta_values) == 1 else f"lr_std_beta (β={beta_value})"
+        train_and_predict(name, lr(), run["Xtr"], run["ytr"], run["Xva"], run["yva"], run["Xte"], run["yte"], label)
 
     logger.info("Training HAR-RV...")
     har_feats = pd.DataFrame({
@@ -281,6 +303,7 @@ def run_d12(dataset: int, logger):
         "auc": roc_auc_score(har_yte, har_pred_te),
         "f1": f1_score(har_yte, har_pred_class, zero_division=0),
     }
+    display_names["har_rv"] = "har_rv"
     logger.info(f"  har_rv: AUC={predictions['har_rv']['auc']:.4f}, F1={predictions['har_rv']['f1']:.4f}")
 
     logger.info("Computing bootstrap confidence intervals (2000 resamples)...")
@@ -288,30 +311,48 @@ def run_d12(dataset: int, logger):
     results_lines.append(f"{'='*80}")
     results_lines.append(f"  DATASET {dataset} — STATISTICAL SIGNIFICANCE TESTS")
     results_lines.append(f"  Bootstrap: 2000 resamples, 95% confidence intervals")
+    if dataset == 2:
+        results_lines.append(f"  β-RQA rows include β=4.0 and β=5.0")
     results_lines.append(f"{'='*80}\n")
 
     results_lines.append("A. BOOTSTRAP CONFIDENCE INTERVALS\n")
-    results_lines.append(f"{'Model':<25} {'AUC':>8} {'AUC 95% CI':>20} {'F1':>8} {'F1 95% CI':>20}")
-    results_lines.append("-" * 85)
+    results_lines.append(f"{'Model':<30} {'AUC':>8} {'AUC 95% CI':>20} {'F1':>8} {'F1 95% CI':>20}")
+    results_lines.append("-" * 90)
 
-    for name in ["rf_std", "rf_std_rqa", "rf_std_beta", "lr_std", "lr_std_rqa", "lr_std_beta", "har_rv"]:
+    model_order = ["rf_std", "rf_std_rqa"]
+    for beta_value in beta_values:
+        suffix = str(beta_value).replace(".", "_")
+        model_order.append("rf_std_beta" if len(beta_values) == 1 else f"rf_std_beta_b{suffix}")
+    model_order += ["lr_std", "lr_std_rqa"]
+    for beta_value in beta_values:
+        suffix = str(beta_value).replace(".", "_")
+        model_order.append("lr_std_beta" if len(beta_values) == 1 else f"lr_std_beta_b{suffix}")
+    model_order.append("har_rv")
+
+    for name in model_order:
         p = predictions[name]
         bs = bootstrap_metric(p["y_true"], p["y_score"], p["y_pred"])
         results_lines.append(
-            f"{name:<25} {bs['auc_mean']:>8.4f} [{bs['auc_ci_lo']:.4f}, {bs['auc_ci_hi']:.4f}]"
+            f"{display_names[name]:<30} {bs['auc_mean']:>8.4f} [{bs['auc_ci_lo']:.4f}, {bs['auc_ci_hi']:.4f}]"
             f" {bs['f1_mean']:>8.4f} [{bs['f1_ci_lo']:.4f}, {bs['f1_ci_hi']:.4f}]"
         )
 
     results_lines.append(f"\n\nB. PAIRED BOOTSTRAP TESTS (AUC difference, H1: B > A)\n")
-    results_lines.append(f"{'Comparison':<45} {'Mean dAUC':>12} {'95% CI':>22} {'p-value':>10}")
-    results_lines.append("-" * 95)
+    results_lines.append(f"{'Comparison':<55} {'Mean dAUC':>12} {'95% CI':>22} {'p-value':>10}")
+    results_lines.append("-" * 105)
 
     comparisons = [
         ("rf_std", "rf_std_rqa", "RF Std → RF Std+RQA"),
-        ("rf_std", "rf_std_beta", f"RF Std → RF Std+β-RQA (β={best_beta})"),
-        ("lr_std", "lr_std_rqa", "LogReg Std → LogReg Std+RQA"),
-        ("lr_std", "lr_std_beta", f"LogReg Std → LogReg Std+β-RQA (β={best_beta})"),
     ]
+    for beta_value in beta_values:
+        suffix = str(beta_value).replace(".", "_")
+        b_name = "rf_std_beta" if len(beta_values) == 1 else f"rf_std_beta_b{suffix}"
+        comparisons.append(("rf_std", b_name, f"RF Std → RF Std+β-RQA (β={beta_value})"))
+    comparisons.append(("lr_std", "lr_std_rqa", "LogReg Std → LogReg Std+RQA"))
+    for beta_value in beta_values:
+        suffix = str(beta_value).replace(".", "_")
+        b_name = "lr_std_beta" if len(beta_values) == 1 else f"lr_std_beta_b{suffix}"
+        comparisons.append(("lr_std", b_name, f"LogReg Std → LogReg Std+β-RQA (β={beta_value})"))
 
     for name_a, name_b, label in comparisons:
         pa, pb = predictions[name_a], predictions[name_b]
@@ -321,7 +362,7 @@ def run_d12(dataset: int, logger):
               "**" if test_res["p_value_b_better"] < 0.01 else \
               "*" if test_res["p_value_b_better"] < 0.05 else "n.s."
         results_lines.append(
-            f"{label:<45} {test_res['mean_auc_diff']:>+12.5f} "
+            f"{label:<55} {test_res['mean_auc_diff']:>+12.5f} "
             f"[{test_res['ci_lo']:>+.5f}, {test_res['ci_hi']:>+.5f}] "
             f"{test_res['p_value_b_better']:>10.4f} {sig}"
         )
