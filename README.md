@@ -3,7 +3,7 @@
 Bachelor thesis project — Department of Advanced Computing Sciences, Maastricht University.
 
 **Author:** Nikitas Ttikkou
-**Supervisors:** Dr. Martijn Boussé, Dr. Philippe Dreesen
+**Supervisors:** Dr. Ir. Martijn Boussé, Dr. Ir. Philippe Dreesen
 **Programme:** BSc Data Science and Artificial Intelligence
 
 ---
