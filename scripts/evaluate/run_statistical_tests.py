@@ -25,7 +25,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats as scipy_stats
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LogisticRegression, LinearRegression
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score, f1_score, confusion_matrix
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -271,41 +271,6 @@ def run_d12(dataset: int, logger):
         label = "lr_std_beta" if len(beta_values) == 1 else f"lr_std_beta (β={beta_value})"
         train_and_predict(name, lr(), run["Xtr"], run["ytr"], run["Xva"], run["yva"], run["Xte"], run["yte"], label)
 
-    logger.info("Training HAR-RV...")
-    har_feats = pd.DataFrame({
-        "rv_d": full["rv"].shift(1),
-        "rv_w": full["rv"].rolling(5).mean().shift(1),
-        "rv_m": full["rv"].rolling(22).mean().shift(1),
-    })
-    har_y = full["regime"].shift(-1)
-    har_rv_next = full["rv"].shift(-1)
-
-    mask = har_feats.notna().all(axis=1) & har_y.notna() & har_rv_next.notna()
-    har_X = har_feats[mask].to_numpy(dtype=float)
-    har_regime = har_y[mask].astype(int).to_numpy()
-    har_rv = har_rv_next[mask].astype(float).to_numpy()
-    har_idx = np.where(mask.to_numpy())[0]
-
-    tr_mask = har_idx < n_tr
-    va_mask = (har_idx >= n_tr) & (har_idx < n_tr + n_va)
-    te_mask = har_idx >= n_tr + n_va
-
-    har_model = LinearRegression()
-    har_model.fit(har_X[tr_mask], har_rv[tr_mask])
-    har_pred_va = har_model.predict(har_X[va_mask])
-    har_pred_te = har_model.predict(har_X[te_mask])
-    har_yte = har_regime[te_mask]
-
-    har_b = best_threshold(har_regime[va_mask], har_pred_va)
-    har_pred_class = (har_pred_te >= har_b).astype(int)
-    predictions["har_rv"] = {
-        "y_true": har_yte, "y_score": har_pred_te, "y_pred": har_pred_class,
-        "auc": roc_auc_score(har_yte, har_pred_te),
-        "f1": f1_score(har_yte, har_pred_class, zero_division=0),
-    }
-    display_names["har_rv"] = "har_rv"
-    logger.info(f"  har_rv: AUC={predictions['har_rv']['auc']:.4f}, F1={predictions['har_rv']['f1']:.4f}")
-
     logger.info("Computing bootstrap confidence intervals (2000 resamples)...")
     results_lines = []
     results_lines.append(f"{'='*80}")
@@ -327,7 +292,6 @@ def run_d12(dataset: int, logger):
     for beta_value in beta_values:
         suffix = str(beta_value).replace(".", "_")
         model_order.append("lr_std_beta" if len(beta_values) == 1 else f"lr_std_beta_b{suffix}")
-    model_order.append("har_rv")
 
     for name in model_order:
         p = predictions[name]
