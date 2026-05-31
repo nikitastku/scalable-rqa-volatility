@@ -10,7 +10,7 @@ Addresses two outstanding items from the checkpoint feedback:
   (B) Embedding-timescale analysis
       Plots the autocorrelation function of |log returns| for each dataset on
       a shared lag-axis, with vertical markers showing where the embedding
-      span (m-1)*tau falls. Lets you defend / revise the choice of m=4, tau=2.
+      span (m-1)*tau falls. Lets us defend / revise the choice of m=4, tau=2.
 """
 from __future__ import annotations
 

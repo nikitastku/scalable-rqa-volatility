@@ -1,3 +1,18 @@
+"""
+Process Dataset 1: the core time-series volatility dataset.
+
+This pipeline loads the raw core time-series data, computes log returns and
+realized volatility, labels high-volatility regimes using a rolling quantile
+method, creates chronological train/validation/test splits, and saves the
+processed outputs to disk.
+
+Processing steps:
+1. Load the raw ``Core_TimeSeries.csv`` dataset.
+2. Compute log returns and realized volatility.
+3. Label volatility regimes using a no-leak rolling quantile threshold.
+4. Split the data chronologically into train, validation, and test sets.
+5. Save the processed split files and a summary CSV.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass

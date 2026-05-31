@@ -1,5 +1,5 @@
 """
-dataset_selector.py — Utility for switching between datasets in training scripts.
+Utility for switching between datasets in training scripts.
 
 Usage in any training script:
     from scalable_rqa_volatility.utils.dataset_selector import add_dataset_arg, load_splits

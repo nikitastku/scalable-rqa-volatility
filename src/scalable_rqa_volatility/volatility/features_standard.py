@@ -1,3 +1,11 @@
+"""
+Compute standard rolling volatility features.
+
+This module builds fast baseline features from log returns and realized
+volatility. It includes absolute returns, squared returns, current realized
+volatility, and rolling return and volatility summaries over configurable
+window lengths.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass

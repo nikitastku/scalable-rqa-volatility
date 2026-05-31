@@ -1,21 +1,16 @@
 """
-walk_forward_cv_d3.py — Non-chronological-split robustness for the headline D3 result.
+Non-chronological-split robustness for the headline D3 result.
 
 Addresses question: does the RQA classification gain on D3 survive under a CV protocol
 that's more defensible than a single 70/15/15 chronological split?
 
-Protocol — purged walk-forward CV with embargo (López de Prado 2018, ch. 7)
+Protocol: purged walk-forward CV with embargo
   - 5 forecast origins, evenly spaced through the second half of each ticker's
     series. At each origin t_i, train on [0, t_i) and test on (t_i+embargo, t_i+embargo+test_len].
   - Purge: drop training samples whose feature window (≤ 390 bars) extends past t_i.
   - Embargo: 60 bars (one RV window) between train end and test start.
   - Per-ticker walk-forward, then pool across tickers; one ΔAUC per fold.
   - Report mean ± SE across folds, plus a Wilcoxon signed-rank test on per-fold ΔAUC.
-
-References:
-  López de Prado, M. (2018). Advances in Financial Machine Learning, chapter 7.
-  Bergmeir, C. & Benítez, J. M. (2012). On the use of cross-validation for
-    time series predictor evaluation. Information Sciences, 191, 192-213.
 """
 from __future__ import annotations
 

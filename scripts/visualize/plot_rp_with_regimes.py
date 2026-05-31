@@ -1,5 +1,5 @@
 """
-plot_rp_with_regimes.py — Recurrence-plot visualizations.
+Recurrence-plot visualizations.
 
 Produces three figures, all from D3 (the dataset where the result actually lives):
 

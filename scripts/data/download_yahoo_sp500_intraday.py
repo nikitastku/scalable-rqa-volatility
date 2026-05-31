@@ -1,3 +1,14 @@
+"""
+Download recent intraday S&P 500 price data from Yahoo Finance.
+
+This script retrieves the current S&P 500 ticker list from Wikipedia, downloads
+intraday OHLCV data for each ticker using Yahoo Finance, writes the results
+incrementally to CSV, optionally converts the CSV output to Parquet, and records
+basic download metadata.
+
+The default configuration downloads 2-minute bars over the most recent 60-day
+period and stores the output under ``data/raw``.
+"""
 from __future__ import annotations
 import argparse
 import os

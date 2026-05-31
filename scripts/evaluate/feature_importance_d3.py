@@ -1,15 +1,15 @@
 """
-feature_importance_d3.py — Feature importance analysis for Dataset 3.
+Feature importance analysis for Dataset 3.
 
 Answers the supervisor's two questions:
   1. WHY do RQA features help? (Which RQA measures are most important?)
   2. Can we throw some away and still get the same performance?
 
 Methods:
-  A. Gini importance (MDI) — from the trained RF model
-  B. Permutation importance — on the test set (model-agnostic)
-  C. Ablation — drop each RQA feature one at a time, measure AUC change
-  D. Feature group analysis — std vs RQA contribution breakdown
+  A. Gini importance (MDI): from the trained RF model
+  B. Permutation importance: on the test set (model-agnostic)
+  C. Ablation: drop each RQA feature one at a time, measure AUC change
+  D. Feature group analysis: std vs RQA contribution breakdown
 """
 from __future__ import annotations
 

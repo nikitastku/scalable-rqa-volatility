@@ -1,3 +1,11 @@
+"""
+Manage project data paths and tabular file I/O.
+
+This module defines standard repository data directories and helper functions
+for creating directories, reading CSV or Parquet tables, and writing processed
+tables back to disk. It centralizes basic data-path handling so pipeline scripts
+can use consistent raw, interim, and processed data locations.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass

@@ -1,3 +1,31 @@
+"""
+Train standard-feature and RQA baseline models on Dataset 1/2.
+
+This script evaluates standard volatility features, RQA features, and combined
+standard-plus-RQA features for next-step volatility-regime classification on the
+processed Dataset 1/2 splits.
+
+Dataset selection:
+The script currently loads processed files using the pattern:
+
+    dataset2_{name}.parquet
+
+where ``name`` is one of ``train``, ``val``, or ``test``.
+
+To run the same pipeline on another processed dataset, modify the dataset prefix
+used in ``load_split()``. Changing ``dataset2_{name}`` to
+``dataset1_{name}`` would load Dataset 1 splits instead. The rest of the
+pipeline can remain unchanged as long as the selected dataset follows the same
+processed schema.
+
+Models evaluated:
+- Logistic regression using standard features.
+- Logistic regression using RQA features.
+- Logistic regression using standard features plus RQA features.
+- Random forest using standard features.
+- Random forest using RQA features.
+- Random forest using standard features plus RQA features.
+"""
 from __future__ import annotations
 
 import argparse
@@ -73,8 +101,7 @@ def f1_fast(y_true: np.ndarray, y_pred: np.ndarray) -> float:
 def best_threshold_target_rate(y_true: np.ndarray, prob: np.ndarray) -> tuple[float, float]:
     """
     UNIFIED threshold tuning: F1 maximization within prevalence bounds.
-    This is now used consistently across ALL feature baseline experiments.
-    Previously, train_beta_features_baselines.py used a different function.
+    This is used consistently across ALL feature baseline experiments.
     """
     y_true = np.asarray(y_true, dtype=int).reshape(-1)
     prob = np.asarray(prob, dtype=float).reshape(-1)

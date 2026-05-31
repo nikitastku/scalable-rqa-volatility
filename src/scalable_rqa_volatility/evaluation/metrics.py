@@ -1,3 +1,10 @@
+"""
+Compute standard classification metrics.
+
+This module provides a small helper for evaluating binary classification
+predictions using accuracy, F1 score, and ROC-AUC. The returned metrics are
+converted to plain Python floats so they can be logged or serialized easily.
+"""
 from __future__ import annotations
 
 import numpy as np

@@ -1,3 +1,12 @@
+"""
+Compute recurrence quantification analysis features.
+
+This module implements standard RQA feature extraction for time-series windows.
+It supports per-series and joint multivariate delay embeddings, estimates
+recurrence thresholds from a target recurrence rate, computes recurrence
+matrices, extracts diagonal and vertical line statistics, and returns rolling
+RQA features for modeling pipelines.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass

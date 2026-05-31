@@ -1,5 +1,5 @@
 """
-run_pipeline_dataset3.py — Process Yahoo Finance intraday S&P 500 data.
+Process Yahoo Finance intraday S&P 500 data.
 
 Input:  Parquet file with ~3M rows of 2-minute bars for 503 S&P 500 stocks.
 Output: dataset3_train/val/test.parquet with features ready for model training.

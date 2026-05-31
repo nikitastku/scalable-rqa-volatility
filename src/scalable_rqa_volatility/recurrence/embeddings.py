@@ -1,3 +1,10 @@
+"""
+Create delay embeddings for recurrence-based time-series analysis.
+
+This module defines the delay-embedding configuration and helper functions used
+to transform one-dimensional time series into lagged state-space vectors. These
+embedded vectors are used by RQA and beta-RQA feature extraction methods.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass

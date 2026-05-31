@@ -1,5 +1,5 @@
 """
-run_statistical_tests.py — Statistical significance testing for all datasets.
+Statistical significance testing for all datasets.
 
 For each dataset, re-runs key model comparisons, saves predictions,
 then computes:

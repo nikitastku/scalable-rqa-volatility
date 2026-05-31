@@ -1,3 +1,12 @@
+"""
+Define the GARCH-informed neural network components.
+
+This module provides the configuration, neural network architecture, GJR-GARCH
+teacher-volatility fitting, volatility-scale mapping, and sequence-building
+utilities used by the GINN training pipeline. The GINN model predicts realized
+volatility from sequential features while optionally using a GJR-GARCH teacher
+signal as an auxiliary guide during training.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass

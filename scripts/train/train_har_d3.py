@@ -1,5 +1,5 @@
 """
-train_har_d3.py — HAR-RV for Dataset 3 (intraday multi-stock).
+HAR-RV for Dataset 3 (intraday multi-stock).
 
 Adapts HAR-RV for intraday bars: uses bar-level RV lags equivalent to
   daily = 60 bars (~2h), weekly = 300 bars (~10h), monthly = 1950 bars (~2weeks)

@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -17,6 +17,7 @@ dependencies = [
     "arch",
     "torch",
     "yfinance",
+    "lxml",
 ]
 
 [tool.setuptools.packages.find]

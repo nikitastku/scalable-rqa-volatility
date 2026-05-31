@@ -1,5 +1,5 @@
 """
-train_gjr_garch_d3.py — GJR-GARCH for Dataset 3 (intraday multi-stock).
+GJR-GARCH for Dataset 3 (intraday multi-stock).
 
 Fits GJR-GARCH per stock on the training portion, then evaluates on the test split.
 Pools predictions across all stocks for the final metric computation.

@@ -1,5 +1,5 @@
 """
-train_lstm_d3.py — LSTM for Dataset 3 (intraday multi-stock).
+LSTM for Dataset 3 (intraday multi-stock).
 
 Key adaptations:
   - Standard features are precomputed (uses STD_FEATURE_COLS from parquet)

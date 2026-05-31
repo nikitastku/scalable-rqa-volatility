@@ -1,5 +1,5 @@
 """
-train_ginn_d3.py — GINN for Dataset 3 (intraday multi-stock).
+GINN for Dataset 3 (intraday multi-stock).
 
 Same as train_lstm_d3.py but with GJR-GARCH teacher distillation.
 For multi-stock, we fit one GJR-GARCH per stock and concatenate teacher signals.

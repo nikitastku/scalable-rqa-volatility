@@ -1,3 +1,33 @@
+"""
+Train and evaluate an LSTM volatility-regime baseline on Dataset 1/2.
+
+This script trains an LSTM model to predict next-step log realized volatility
+from rolling return and realized-volatility features. The predicted volatility
+is then compared against a rolling volatility-regime threshold to produce binary
+high-volatility regime predictions.
+
+Dataset selection:
+The script currently loads processed files using the pattern:
+
+    dataset2_{name}.parquet
+
+where ``name`` is one of ``train``, ``val``, or ``test``.
+
+To run the same pipeline on the processed dataset 1, modify the dataset prefix
+used in ``load_split()``. Changing ``dataset2_{name}`` to
+``dataset1_{name}`` would load Dataset 1 splits instead. The rest of the
+pipeline can remain unchanged as long as the selected dataset follows the same
+processed schema.
+
+Workflow:
+1. Load processed train, validation, and test splits.
+2. Build rolling return and realized-volatility features.
+3. Convert the feature matrix into fixed-length supervised sequences.
+4. Train an LSTM to predict next-step log realized volatility.
+5. Convert predicted log volatility into regime scores.
+6. Calibrate the regime-score offset on validation data.
+7. Evaluate final regime-classification performance on the test split.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -69,7 +99,7 @@ def as_device(device: str) -> torch.device:
 
 def build_features(df: pd.DataFrame, windows: tuple[int, ...]) -> pd.DataFrame:
     """
-    IMPROVED: includes RV and rolling-RV features alongside return features.
+    Includes RV and rolling-RV features alongside return features.
     RV autocorrelation is ~0.997 at lag-1, making lagged RV the single most
     informative predictor for next-day RV (as HAR-RV demonstrates).
     """

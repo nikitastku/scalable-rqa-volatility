@@ -1,3 +1,12 @@
+"""
+Label volatility regimes from realized-volatility series.
+
+This module provides static and rolling threshold-based labeling utilities for
+turning continuous realized volatility into binary regime labels. It supports
+median or quantile thresholds fitted on a dataset, as well as no-leak rolling
+quantile labeling where each regime label is based only on historical volatility
+values available before that time step.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass

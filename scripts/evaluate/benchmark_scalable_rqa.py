@@ -1,9 +1,9 @@
 """
-benchmark_scalable_rqa.py — Implement and benchmark alternative scalable RQA methods.
+Implement and benchmark alternative scalable RQA methods.
 
 Implements two algorithms from Marwan (2025):
-  1. RQA_woRP  — Exact RQA without constructing the recurrence matrix (O(N) memory)
-  2. RQA_Samp  — Sampled RQA: randomly sample M pairs, trace lines (O(N) memory)
+  1. RQA_woRP: Exact RQA without constructing the recurrence matrix (O(N) memory)
+  2. RQA_Samp: Sampled RQA: randomly sample M pairs, trace lines (O(N) memory)
 
 Benchmarks against our current windowed RQA on actual D3 (intraday) data:
   A. Single-stock accuracy comparison (RQA measures vs exact)
@@ -104,13 +104,13 @@ def rqa_standard(X: np.ndarray, eps: float, lmin: int = 2, vmin: int = 2) -> dic
 
 def rqa_worp(X: np.ndarray, eps: float, lmin: int = 2, vmin: int = 2) -> dict[str, float]:
     """
-    RQA without Recurrence Plot (Marwan 2025, Algorithm 1).
+    RQA without Recurrence Plot.
 
     Computes RQA measures WITHOUT constructing the N×N recurrence matrix.
     Iterates over diagonals and columns, computing distances on-the-fly.
 
-    Memory: O(N) — only stores line length histograms.
-    Time:   O(N²) — still checks all pairs, but avoids matrix allocation.
+    Memory: O(N), only stores line length histograms.
+    Time:   O(N²), still checks all pairs, but avoids matrix allocation.
 
     This is exact (identical results to standard RQA).
     """
@@ -199,7 +199,7 @@ def rqa_samp(
     lmin: int = 2, vmin: int = 2, seed: int = 42,
 ) -> dict[str, float]:
     """
-    Sampled RQA (Marwan 2025, Algorithm 2).
+    Sampled RQA.
 
     Instead of checking all N² pairs, randomly samples M pairs and traces
     line structures from each recurrent sample.
@@ -341,7 +341,7 @@ def rqa_worp_vectorised(X: np.ndarray, eps: float, lmin: int = 2, vmin: int = 2)
     diagonal / column at a time using vectorised distance computation.
     Each diagonal/column requires O(N) memory, not O(N²).
 
-    This is the PRACTICAL Python implementation — the pure loop version
+    This is the PRACTICAL Python implementation, the pure loop version
     (rqa_worp) is too slow in Python for N > 500.
     """
     n = X.shape[0]

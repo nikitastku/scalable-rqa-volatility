@@ -1,3 +1,17 @@
+"""
+Run a beta-RQA feature-importance sweep on Dataset 3.
+
+This script evaluates whether horizontal beta-RQA measures improve volatility
+regime classification when recurrence plots become asymmetric under different
+beta values. It loads the processed Dataset 3 splits, computes beta-RQA features
+per stock, trains random forest classifiers, measures predictive performance,
+computes permutation importances, runs feature ablations, generates a summary
+figure, and writes a text report.
+
+The main question tested here is whether horizontal recurrence
+measures such as ``LAM_h`` and ``TT_h`` add useful information beyond standard
+RQA measures when the recurrence structure is asymmetric.
+"""
 from __future__ import annotations
 
 import argparse

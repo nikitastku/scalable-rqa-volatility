@@ -1,3 +1,11 @@
+"""
+Generate thesis figures for dataset overviews and distribution-shift comparison.
+
+This script creates the main preprocessing and dataset-description figures used
+to compare the three processed datasets. It visualizes price or volatility
+series, regime labels, train/validation/test split boundaries, and train-test
+realized-volatility distribution shifts.
+"""
 from __future__ import annotations
 
 from pathlib import Path

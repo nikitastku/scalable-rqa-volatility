@@ -1,5 +1,5 @@
 """
-train_features_baselines_d3.py — Feature baselines for Dataset 3 (intraday multi-stock).
+Feature baselines for Dataset 3 (intraday multi-stock).
 
 Key adaptations from Datasets 1/2:
   - Standard features are PRECOMPUTED in the parquet (no recomputation needed)

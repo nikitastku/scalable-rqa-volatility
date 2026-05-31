@@ -1,3 +1,12 @@
+"""
+Load and validate the core time-series dataset.
+
+This module defines the expected column schema for the raw core dataset and
+provides a loader that reads the table, checks required OHLC columns, parses the
+date column, sorts observations chronologically, converts price and volume
+columns to numeric types, and raises clear validation errors when the input data
+does not match the expected format.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass

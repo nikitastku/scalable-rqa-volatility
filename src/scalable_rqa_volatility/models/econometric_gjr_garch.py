@@ -1,3 +1,12 @@
+"""
+Fit and forecast volatility using a GJR-GARCH model.
+
+This module defines a small wrapper around the ``arch`` package for estimating
+a GJR-GARCH model on a training window and producing one-step-ahead conditional
+volatility forecasts. The implementation keeps model fitting restricted to the
+training period while allowing forecasts to be generated over later validation
+or test ranges.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass

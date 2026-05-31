@@ -1,3 +1,12 @@
+"""
+Compute beta-recurrence quantification analysis features.
+
+This module extends standard RQA with beta-divergence-based recurrence
+distances. It supports both single-series and joint multivariate embeddings,
+computes standard RQA measures, adds horizontal-line measures for asymmetric
+beta-recurrence plots, and provides a rolling feature extractor for time-series
+modeling pipelines.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass

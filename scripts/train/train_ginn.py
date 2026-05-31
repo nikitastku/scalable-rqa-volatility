@@ -1,3 +1,35 @@
+"""
+Train a GARCH-informed neural network on Dataset 1/2.
+
+This script trains a GINN model for next-step realized-volatility prediction and
+then converts the predicted volatility into a volatility-regime classification.
+The model is guided by both observed realized volatility and a GJR-GARCH teacher
+signal.
+
+Dataset selection:
+The script currently loads processed files using the pattern:
+
+    dataset2_{name}.parquet
+
+where ``name`` is one of ``train``, ``val``, or ``test``.
+
+To run the same pipeline on the processed dataset 1, modify the dataset prefix
+used in ``load_split()``. Changing ``dataset2_{name}`` to
+``dataset1_{name}`` would load Dataset 1 splits instead. The rest of the
+pipeline can remain unchanged as long as the selected dataset follows the same
+processed schema.
+
+Workflow:
+1. Load processed train, validation, and test splits.
+2. Build rolling return and realized-volatility features.
+3. Fit a GJR-GARCH teacher volatility series on the training data.
+4. Build fixed-length sequential inputs for the neural network.
+5. Train the GINN model using a weighted combination of data loss and teacher
+   loss.
+6. Convert predicted log-volatility into regime scores.
+7. Calibrate the regime threshold on validation data.
+8. Evaluate classification performance on the test split.
+"""
 from __future__ import annotations
 
 import argparse

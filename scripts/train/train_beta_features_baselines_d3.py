@@ -1,3 +1,21 @@
+"""
+Train beta-RQA baseline models on Dataset 3.
+
+This script evaluates beta-RQA features for next-step volatility-regime
+classification on the processed intraday Dataset 3 splits. It supports both
+beta-RQA-only models and combined standard-feature plus beta-RQA models.
+
+The workflow loads the train, validation, and test splits, computes beta-RQA
+features independently per stock, aligns features with next-step regime labels,
+selects a validation-based classification threshold, and evaluates models on
+the test set.
+
+Models evaluated:
+- Logistic regression using beta-RQA features only.
+- Random forest using beta-RQA features only.
+- Logistic regression using standard features plus beta-RQA features.
+- Random forest using standard features plus beta-RQA features.
+"""
 from __future__ import annotations
 
 import argparse

@@ -1,5 +1,5 @@
 """
-run_pipeline_dataset2.py — Process the S&P 500 Macro-Financial Volatility Dataset.
+Process the S&P 500 Macro-Financial Volatility Dataset.
 
 This dataset contains real S&P 500 daily data (2010–2019) with 31 columns
 including cross-market indices, options data, macro indicators, and commodities.

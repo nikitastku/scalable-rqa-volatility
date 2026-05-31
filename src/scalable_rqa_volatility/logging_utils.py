@@ -1,3 +1,11 @@
+"""
+Configure project-wide logging.
+
+This module defines a reusable logging configuration and a helper for creating
+a consistently formatted logger. It prevents duplicate handlers while providing
+standard timestamped log messages for preprocessing, training, and evaluation
+scripts.
+"""
 from __future__ import annotations
 
 import logging

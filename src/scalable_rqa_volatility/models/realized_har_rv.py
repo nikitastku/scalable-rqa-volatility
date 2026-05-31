@@ -1,3 +1,11 @@
+"""
+Define the HAR realized-volatility baseline model.
+
+This module provides utilities for building a Heterogeneous Autoregressive
+realized-volatility dataset and fitting a linear HAR-RV model. The model uses
+lagged daily, weekly, and monthly realized-volatility predictors to forecast the
+next realized-volatility value.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass

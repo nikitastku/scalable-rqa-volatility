@@ -1,3 +1,10 @@
+"""
+Set global random seeds for reproducible experiments.
+
+This module provides a helper for synchronizing randomness across Python hash
+seeding, the standard ``random`` module, and NumPy. It is used by preprocessing,
+training, and evaluation scripts to make repeated runs more deterministic.
+"""
 from __future__ import annotations
 
 import os

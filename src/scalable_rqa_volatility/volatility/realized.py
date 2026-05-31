@@ -1,3 +1,10 @@
+"""
+Compute return and realized-volatility features.
+
+This module adds log returns, high-low price range, and a rolling realized-
+volatility proxy to OHLC price data. The output columns and rolling volatility
+window are controlled through a small configuration dataclass.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass

@@ -1,3 +1,32 @@
+"""
+Train beta-RQA baseline models on Dataset 1/2.
+
+This script evaluates beta-RQA features for next-step volatility-regime
+classification on the processed Dataset 1/2 splits. It compares beta-RQA-only
+models against models that combine standard volatility features with beta-RQA
+features.
+
+Dataset selection:
+The script currently loads processed files using the pattern:
+
+    dataset2_{name}.parquet
+
+where ``name`` is one of ``train``, ``val``, or ``test``.
+
+To run the same pipeline on the processed dataset 1, modify the dataset
+prefix used in ``load_split()`` to:
+
+    dataset1_{name}.parquet
+
+The remainder of the training pipeline remains unchanged as long as the target
+dataset follows the same processed schema.
+
+Models evaluated:
+- Logistic regression using beta-RQA features only.
+- Random forest using beta-RQA features only.
+- Logistic regression using standard features plus beta-RQA features.
+- Random forest using standard features plus beta-RQA features.
+"""
 from __future__ import annotations
 
 import argparse
@@ -201,7 +230,6 @@ def main() -> None:
     X_beta_val, y_val_beta = build_xy_within_split(val, X_beta_val, cfg.label_col)
     X_beta_test, y_test_beta = build_xy_within_split(test, X_beta_test, cfg.label_col)
 
-    # Align
     X_std_train, X_beta_train, y_train = align_two(X_std_train, X_beta_train, y_train)
     X_std_val, X_beta_val, y_val = align_two(X_std_val, X_beta_val, y_val)
     X_std_test, X_beta_test, y_test = align_two(X_std_test, X_beta_test, y_test)

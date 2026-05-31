@@ -1,5 +1,5 @@
 """
-classify_with_rqa_samp_d3.py — Test RQA_Samp in the classification pipeline.
+Test RQA_Samp in the classification pipeline.
 
 Supervisor feedback: "If you do this now, if you add this to your pipeline,
 how big of an impact does that have on your performance? Do you completely

@@ -1,3 +1,11 @@
+"""
+Save, load, and plot model prediction outputs.
+
+This module defines a prediction bundle format and helper functions for storing
+classification predictions as compressed NumPy files. It also provides plotting
+utilities for ROC curves, confusion matrices, and combined ROC comparisons
+across multiple models.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass

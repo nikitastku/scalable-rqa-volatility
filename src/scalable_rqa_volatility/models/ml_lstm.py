@@ -1,3 +1,11 @@
+"""
+Define LSTM utilities for volatility forecasting.
+
+This module provides the configuration, dataset wrapper, supervised sequence
+builder, and neural network architecture used by the LSTM volatility baseline.
+It converts time-series rows into fixed-length sequences and trains an LSTM to
+predict the next realized-volatility value from historical feature windows.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass

@@ -1,3 +1,35 @@
+"""
+Train and evaluate a HAR realized-volatility baseline on Dataset 1/2.
+
+This script trains a Heterogeneous Autoregressive (HAR) model using daily,
+weekly, and monthly realized-volatility predictors. The model forecasts
+next-step realized volatility, compares the forecast with a rolling
+volatility-regime threshold, and evaluates the resulting binary regime
+classification.
+
+Dataset selection:
+The script currently loads processed files using the pattern:
+
+    dataset2_{name}.parquet
+
+where ``name`` is one of ``train``, ``val``, or ``test``.
+
+To run the same pipeline on the processed dataset 1, modify the dataset prefix
+used in ``load_split()``. Changing ``dataset2_{name}`` to
+``dataset1_{name}`` would load Dataset 1 splits instead. The rest of the
+pipeline can remain unchanged as long as the selected dataset follows the same
+processed schema.
+
+Workflow:
+1. Load processed train, validation, and test splits.
+2. Concatenate the splits to preserve chronological continuity.
+3. Build HAR predictors from lagged realized volatility.
+4. Train a linear regression model on the training split.
+5. Forecast next-step realized volatility for validation and test splits.
+6. Convert volatility forecasts into regime scores.
+7. Calibrate the classification threshold on validation data.
+8. Evaluate regime-classification performance on the test split.
+"""
 from __future__ import annotations
 
 from pathlib import Path

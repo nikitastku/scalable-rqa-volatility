@@ -1,3 +1,35 @@
+"""
+Train and evaluate a GJR-GARCH volatility-regime baseline on Dataset 1/2.
+
+This script fits a GJR-GARCH model to the processed return series, forecasts
+one-step-ahead volatility, maps the forecasted conditional volatility to the
+realized-volatility scale, and converts the forecast into a binary
+volatility-regime prediction.
+
+Dataset selection
+-----------------
+The script currently loads processed files using the pattern:
+
+    dataset2_{name}.parquet
+
+where ``name`` is one of ``train``, ``val``, or ``test``.
+
+To run the same pipeline on the processed dataset 1, modify the dataset prefix
+used in ``load_split()``. Changing ``dataset2_{name}`` to
+``dataset1_{name}`` would load Dataset 1 splits instead. The rest of the
+pipeline can remain unchanged as long as the selected dataset follows the same
+processed schema.
+
+Workflow:
+1. Load processed train, validation, and test splits.
+2. Concatenate the splits to preserve chronological continuity.
+3. Compute no-leak rolling volatility thresholds from realized volatility.
+4. Fit a GJR-GARCH model using the training period.
+5. Forecast one-step-ahead conditional volatility for validation and test.
+6. Calibrate the volatility-to-realized-volatility scale on training data.
+7. Select a validation offset that maximizes F1.
+8. Evaluate the calibrated regime predictions on the test split.
+"""
 from __future__ import annotations
 
 from pathlib import Path

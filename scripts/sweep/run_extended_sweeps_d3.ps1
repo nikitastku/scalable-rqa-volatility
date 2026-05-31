@@ -1,3 +1,31 @@
+<#
+.SYNOPSIS
+Runs extended beta-RQA parameter sweeps for Dataset 3.
+
+.DESCRIPTION
+This PowerShell script executes a set of additional beta-RQA training runs for
+Dataset 3 using different hyperparameter settings. It is designed to extend the
+main Dataset 3 experiments by testing larger beta values, alternative embedding
+dimensions, alternative time delays, and alternative recurrence rates.
+
+The script uses ``$ErrorActionPreference = "Continue"`` so that later sweep
+runs continue even if an earlier command fails.
+
+Sweep groups:
+
+1. Extended beta sweep:
+   Tests beta values 3.0, 4.0, and 5.0 using the default embedding setup.
+
+2. Embedding dimension sweep:
+   Tests multiple embedding dimensions at beta=2.0 and tau=2.
+
+3. Time delay sweep:
+   Tests multiple tau values at beta=2.0 and m=4.
+
+4. Recurrence rate sweep:
+   Tests recurrence rates 0.05 and 0.20 at beta=2.0, m=4, and tau=2.
+#>
+
 $ErrorActionPreference = "Continue"
 
 Write-Host "EXTENDED PARAMETER SWEEPS - DATASET 3" -ForegroundColor Cyan
