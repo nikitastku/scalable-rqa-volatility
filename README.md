@@ -211,6 +211,6 @@ The processed splits in `data/processed/` are deterministic functions of the raw
 
 ## Licence and acknowledgements
 
-This thesis was conducted under the supervision of Dr. Martijn Boussé and Dr. Philippe Dreesen at Maastricht University. Code is provided for the purpose of academic evaluation. Third-party data is subject to the providers' respective terms.
+This thesis was conducted under the supervision of Dr. Ir. Martijn Boussé and Dr. Ir. Philippe Dreesen at Maastricht University. Code is provided for the purpose of academic evaluation. Third-party data is subject to the providers' respective terms.
 
 For questions related to this project, contact the author via the Department of Advanced Computing Sciences.
