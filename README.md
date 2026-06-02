@@ -174,15 +174,16 @@ Aggregation experiment on D3 (50 tickers): ΔAUC = −0.0003 (2-min) / +0.0120 (
 
 ## Dependencies
 
-Defined in `pyproject.toml`. Core requirements:
+Defined in `pyproject.toml`. Core requirements include:
 
-- Python ≥ 3.10
+- Python ≥ 3.12
 - numpy, pandas, scipy, scikit-learn
 - matplotlib
 - pyarrow
 - arch (for GJR-GARCH)
 - torch (for LSTM / GINN)
 - yfinance (only for re-downloading D3 raw data)
+- lxml
 
 Install everything with `pip install -e .` from the repository root.
 
