@@ -1,6 +1,6 @@
 # Scalable Recurrence-Based Feature Extraction for Volatility Regime Prediction in Financial Time Series
 
-Bachelor thesis project — Department of Advanced Computing Sciences, Maastricht University.
+Bachelor thesis project: Department of Advanced Computing Sciences, Maastricht University.
 
 **Author:** Nikitas Ttikkou
 **Supervisors:** Dr. Ir. Martijn Boussé, Dr. Ir. Philippe Dreesen
@@ -115,7 +115,7 @@ python scripts/evaluate/feature_importance_beta_sweep_d3.py   # Horizontal-measu
 ### Scalable RQA benchmarks
 
 ```bash
-python scripts/evaluate/benchmark_scalable_rqa.py             # Marwan 2025 woRP / Samp timings
+python scripts/evaluate/benchmark_scalable_rqa.py             # Marwan 2026 woRP / Samp timings
 python scripts/evaluate/classify_with_rqa_samp_d3.py          # Classification cost of sampling
 ```
 
@@ -200,12 +200,12 @@ The processed splits in `data/processed/` are deterministic functions of the raw
 
 ## Citing the methods used
 
-- Marwan, N., Romano, M. C., Thiel, M., & Kurths, J. (2007). *Recurrence plots for the analysis of complex systems.* Physics Reports, 438(5–6), 237–329.
-- Marwan, N., & Webber, C. L. Jr. (2025). *Recurrence quantification analysis without the recurrence plot and via sampling.* (RQA_woRP / RQA_Samp).
--  E. Deckert, P. Dreesen, N. Marwan, and M. Bouss´e, et al. (2025). *β-divergence based recurrence plots for audio time-series analysis* EUSIPCO 2025.
-- López de Prado, M. (2018). *Advances in Financial Machine Learning*, chapter 7 (purged walk-forward CV).
-- Corsi, F. (2009). *A simple approximate long-memory model of realized volatility* (HAR-RV).
-- Glosten, L. R., Jagannathan, R., & Runkle, D. E. (1993). *On the relation between the expected value and the volatility of the nominal excess return on stocks* (GJR-GARCH).
+- Marwan, N., Romano, M. C., Thiel, M., & Kurths, J. (2007). *Recurrence plots for the analysis of complex systems.* Physics Reports, 438(5–6), 237–329. https://doi.org/10.1016/j.physrep.2006.11.001
+- Marwan, N. (2026). *Energy-efficient recurrence quantification analysis.* The European Physical Journal Special Topics. https://doi.org/10.1140/epjs/s11734-025-02121-w  *(introduces the without-RP and sampled-RP methods, RQA_woRP / RQA_Samp)*
+- Deckert, E., Dreesen, P., Marwan, N., & Boussé, M. (2025). *Beta-divergence-based recurrence plots for audio time-series analysis.* In Proceedings of the 33rd European Signal Processing Conference (EUSIPCO 2025) (pp. 291–295). https://doi.org/10.23919/EUSIPCO63237.2025.11226301
+- López de Prado, M. (2018). *Advances in Financial Machine Learning* (ch. 7, purged walk-forward CV). Hoboken, NJ: John Wiley & Sons.
+- Corsi, F. (2009). *A simple approximate long-memory model of realized volatility* (HAR-RV). Journal of Financial Econometrics, 7(2), 174–196. https://doi.org/10.1093/jjfinec/nbp001
+- Glosten, L. R., Jagannathan, R., & Runkle, D. E. (1993). *On the relation between the expected value and the volatility of the nominal excess return on stocks* (GJR-GARCH). The Journal of Finance, 48(5), 1779–1801. https://doi.org/10.1111/j.1540-6261.1993.tb05128.x
 
 ---
 
