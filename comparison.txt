@@ -552,7 +552,7 @@ Literature: Marwan & Kraemer 2024 (Sec 2.8, threshold selection)
      This is the BEST RF F1 across all feature baselines.
    - LogReg Std+β-RQA at β=5.0 achieves AUC=0.987
      This SURPASSES HAR-RV (0.986) and approaches LSTM (0.993).
-   - Dreesen 2025 tested up to β=4; β=5 is genuinely novel.
+   - Deckert et al. (2025) tested up to β=4; β=5 is genuinely novel.
    The optimal β for financial volatility data lies ABOVE the standard
    literature range, suggesting large-value emphasis is beneficial.
 
@@ -1123,7 +1123,7 @@ different computation mode designed for feature extraction in ML pipelines.
 1. COMBINE RQA_Samp WITH beta-DIVERGENCE (Novel proposal)
    Marwan 2025's sampling approach samples random (i,j) pairs and measures
    line lengths. This could be extended to use beta-divergence distance
-   (Dreesen 2025) instead of Euclidean distance for the recurrence condition.
+   (Deckert et al. (2025)) instead of Euclidean distance for the recurrence condition.
    Expected benefit: Faster computation (from sampling) + better sensitivity
    to volatility regime transitions (from beta-divergence).
    Neither paper currently combines these two ideas.

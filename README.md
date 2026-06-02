@@ -10,7 +10,7 @@ Bachelor thesis project — Department of Advanced Computing Sciences, Maastrich
 
 ## What this project does
 
-This project tests whether scalable recurrence-based features — Recurrence Quantification Analysis (RQA), the β-RQA extension of Dreesen et al. (2025), and the without-RP / sampled-RP variants of Marwan & Webber (2025) — improve next-period volatility-regime classification on financial time series, beyond what standard rolling features achieve.
+This project tests whether scalable recurrence-based features — Recurrence Quantification Analysis (RQA), the β-RQA extension of Deckert et al. (2025), and the without-RP / sampled-RP variants of Marwan (2026), improve next-period volatility-regime classification on financial time series, beyond what standard rolling features achieve.
 
 The investigation is run on three datasets that span five orders of magnitude in physical bar size: a long synthetic daily series (D1, 1902–2017), a ten-year S&P 500 macro-financial panel (D2, 2010–2019), and an intraday cross-section of 503 S&P 500 stocks sampled at 2-minute resolution (D3).
 
@@ -20,7 +20,7 @@ The investigation is run on three datasets that span five orders of magnitude in
 - it survives a purged walk-forward CV protocol (mean ΔAUC across 5 folds = **+0.00176**, Wilcoxon p = 0.03125);
 - it does not appear on D1 (covariate-shifted) or D2 (sample-size limited), which the project documents as predictable consequences of those datasets' structure.
 
-A separate sub-finding from the β-RQA work: the horizontal-line measures introduced by Dreesen et al. 2025 are mathematically redundant when β = 2 (LAM ↔ LAM_h correlation = 1.0000) and gain information only as β moves away from 2 — confirmed empirically on D3.
+A separate sub-finding from the β-RQA work: the horizontal-line measures introduced by Deckert et al. (2025) are mathematically redundant when β = 2 (LAM ↔ LAM_h correlation = 1.0000) and gain information only as β moves away from 2, confirmed empirically on D3.
 
 ---
 
@@ -202,7 +202,7 @@ The processed splits in `data/processed/` are deterministic functions of the raw
 
 - Marwan, N., Romano, M. C., Thiel, M., & Kurths, J. (2007). *Recurrence plots for the analysis of complex systems.* Physics Reports, 438(5–6), 237–329.
 - Marwan, N., & Webber, C. L. Jr. (2025). *Recurrence quantification analysis without the recurrence plot and via sampling.* (RQA_woRP / RQA_Samp).
-- Dreesen, P., Boussé, M., et al. (2025). *β-divergence recurrence plots.* EUSIPCO 2025.
+-  E. Deckert, P. Dreesen, N. Marwan, and M. Bouss´e, et al. (2025). *β-divergence based recurrence plots for audio time-series analysis* EUSIPCO 2025.
 - López de Prado, M. (2018). *Advances in Financial Machine Learning*, chapter 7 (purged walk-forward CV).
 - Corsi, F. (2009). *A simple approximate long-memory model of realized volatility* (HAR-RV).
 - Glosten, L. R., Jagannathan, R., & Runkle, D. E. (1993). *On the relation between the expected value and the volatility of the nominal excess return on stocks* (GJR-GARCH).

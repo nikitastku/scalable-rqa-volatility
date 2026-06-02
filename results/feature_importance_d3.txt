@@ -149,5 +149,5 @@ G. ABLATION — Drop each β-RQA feature from RF Std+β-RQA
   - Does removing any single RQA feature cause a notable AUC drop?
   - Is the total RQA contribution (ALL_RQA_removed ΔAUC) larger than
     any individual feature's contribution? (If so, features are complementary.)
-  - Do the Dreesen 2025 horizontal measures (LAM_h, TT_h, ΔLAM, ΔTT)
+  - Do the Deckert 2025 horizontal measures (LAM_h, TT_h, ΔLAM, ΔTT)
     contribute meaningfully in the β-RQA model?

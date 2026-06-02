@@ -654,7 +654,7 @@ def main():
     lines.append("  - Does removing any single RQA feature cause a notable AUC drop?")
     lines.append("  - Is the total RQA contribution (ALL_RQA_removed ΔAUC) larger than")
     lines.append("    any individual feature's contribution? (If so, features are complementary.)")
-    lines.append("  - Do the Dreesen 2025 horizontal measures (LAM_h, TT_h, ΔLAM, ΔTT)")
+    lines.append("  - Do the Deckert 2025 horizontal measures (LAM_h, TT_h, ΔLAM, ΔTT)")
     lines.append("    contribute meaningfully in the β-RQA model?")
 
     results_text = "\n".join(lines)

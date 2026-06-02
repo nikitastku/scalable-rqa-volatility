@@ -108,7 +108,7 @@ def _horiz_line_lengths(R: np.ndarray) -> np.ndarray:
     Horizontal line lengths from rows of the recurrence matrix.
     For symmetric RPs (β=2), these equal vertical line lengths.
     For asymmetric β-RPs (β≠2), they capture different structure.
-    From Dreesen et al. 2025, Section IV.B.
+    From Deckert et al. (2025).
     """
     lengths: list[int] = []
     for i in range(R.shape[0]):
