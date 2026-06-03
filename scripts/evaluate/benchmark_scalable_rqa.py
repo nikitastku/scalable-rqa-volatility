@@ -1,7 +1,7 @@
 """
 Implement and benchmark alternative scalable RQA methods.
 
-Implements two algorithms from Marwan (2025):
+Implements two algorithms from Marwan (2026):
   1. RQA_woRP: Exact RQA without constructing the recurrence matrix (O(N) memory)
   2. RQA_Samp: Sampled RQA: randomly sample M pairs, trace lines (O(N) memory)
 
@@ -679,7 +679,7 @@ def main():
 
     print("=" * 70)
     print("  BENCHMARK: SCALABLE RQA METHODS ON DATASET 3")
-    print("  Implements RQA_woRP + RQA_Samp (Marwan 2025)")
+    print("  Implements RQA_woRP + RQA_Samp (Marwan 2026)")
     print("=" * 70)
 
     logger.info("Loading D3 train split...")
@@ -777,7 +777,7 @@ def main():
     lines = []
     lines.append("=" * 80)
     lines.append("  SCALABLE RQA BENCHMARK — DATASET 3")
-    lines.append("  Methods: Standard (full RP) | RQA_woRP (Marwan 2025) | RQA_Samp (Marwan 2025)")
+    lines.append("  Methods: Standard (full RP) | RQA_woRP (Marwan 2026) | RQA_Samp (Marwan 2026)")
     lines.append("=" * 80)
 
     lines.append(f"\n\nA. SINGLE-STOCK TIMING (stock: {sample_ticker}, {len(df_stock)} bars)\n")

@@ -436,7 +436,6 @@ Config definitions:
 All sweeps at β=0.5 (best standard-range β for RF).
 
 --- Embedding dimension m sweep (β=0.5, tau=2, RR=0.1) ---
-Literature: Marwan et al. 2007 (Sec 3.1), Zbilut & Webber 1992
 
   m   | RF Std+β AUC | RF Std+β F1 | LogReg Std+β AUC | LogReg Std+β F1
   2   | 0.976        | 0.905       | 0.979            | 0.721
@@ -451,7 +450,6 @@ Literature: Marwan et al. 2007 (Sec 3.1), Zbilut & Webber 1992
   Finding: Lower m is better. Performance degrades monotonically for m>5.
 
 --- Time delay tau sweep (β=0.5, m=4, RR=0.1) ---
-Literature: Marwan et al. 2007 (mutual information criterion)
 
   tau | RF Std+β AUC | RF Std+β F1 | LogReg Std+β AUC | LogReg Std+β F1
   1   | 0.973        | 0.890       | 0.975            | 0.834
@@ -464,7 +462,6 @@ Literature: Marwan et al. 2007 (mutual information criterion)
   Finding: tau=2 is robust for RF. LogReg can benefit from larger tau.
 
 --- Recurrence rate RR sweep (β=0.5, m=4, tau=2) ---
-Literature: Marwan & Kraemer 2024 (Sec 2.8, threshold selection)
 
   RR   | RF Std+β AUC | RF Std+β F1 | LogReg Std+β AUC | LogReg Std+β F1
   0.05 | 0.970        | 0.882       | 0.982            | 0.796
@@ -1006,45 +1003,45 @@ time series?
 
 Six main approaches to scalable RQA computation have been identified:
 
-1. RQA_woRP — Direct RQA without Recurrence Plot (Marwan 2025)
+1. RQA_woRP — Direct RQA without Recurrence Plot 
    Computes line length histograms directly from phase space vectors without
    constructing the full N x N recurrence matrix. Reduces memory from O(N^2)
    to O(N) and computation steps by >50%, while producing EXACT results.
    At N=25,000: 0.48s vs 2.06s for standard RQA (4.3x speedup).
 
-2. RQA_Samp — Sampled RQA (Marwan 2025)
+2. RQA_Samp — Sampled RQA 
    Extends RQA_woRP with random sampling: instead of testing all N^2 pairs,
    randomly samples M pairs and measures line lengths from valid starts.
    With M=4N: 0.26s at N=25,000 (7.9x speedup, near-exact results).
    With M=0.2N: 0.013s at N=25,000 (158x speedup, DET deviation <10^-4).
    Accuracy: M=500 samples already yields DET deviations <10^-4 for N=25,000.
 
-3. Recurrence Microstates (Cruz 2025, Spezzatto 2024)
+3. Recurrence Microstates 
    Approximates DET and LAM from sampled 3x3 sub-matrices of the RP.
    At N=25,000 with M=4N: 0.018s (114x speedup over standard RQA).
    Trade-off: less accurate than RQA_Samp for the same M, but faster
    due to highly optimised compiled C code in the Julia implementation.
 
-4. RQA_OpenMP — Parallel CPU RQA (Marwan, rp_speedtest repo)
+4. RQA_OpenMP — Parallel CPU RQA 
    C-based implementation using OpenMP multithreading for parallel RP
    construction and RQA computation. Exact results, O(N^2/P) where P
    is the number of threads.
    At N=200,000 with 128 threads: 1 min 51s vs 9 min 17s single-thread.
 
-5. PyRQA — OpenCL GPU-accelerated RQA (Rawald et al. 2017)
+5. PyRQA — OpenCL GPU-accelerated RQA 
    Massively parallel RQA using OpenCL framework on GPUs. Processes
    time series of >1 million data points. Uses divide-and-recombine
    paradigm to split the RP across GPU devices.
    At N=200,000 with 2x GPU: 11.4s vs 9 min 17s single-thread (49x).
    At N=1,000,000: ~5 min with 2x GPU (Potsdam climate data).
 
-6. AccRQA — Multi-platform accelerated RQA (Adamek et al. 2025)
+6. AccRQA — Multi-platform accelerated RQA 
    High-performance CPU and NVIDIA GPU implementation. Requires
    CMake and C++ compiler (or CUDA for GPU mode).
    Benchmarked on HPC with Nvidia H100 GPU in rp_speedtest repo.
 
 ================================================================================
-  B. PUBLISHED BENCHMARK: COMPUTATION TIMES (from Marwan 2025, Table 1)
+  B. PUBLISHED BENCHMARK: COMPUTATION TIMES 
      Rossler system, N=25,000, m=3, tau=6, Euclidean norm, epsilon=1.2
      Hardware: AMD EPYC 9554 32-Core, PIK "Foote" HPC
 ================================================================================
@@ -1121,7 +1118,7 @@ different computation mode designed for feature extraction in ML pipelines.
 ================================================================================
 
 1. COMBINE RQA_Samp WITH beta-DIVERGENCE (Novel proposal)
-   Marwan 2025's sampling approach samples random (i,j) pairs and measures
+   Marwan's sampling approach samples random (i,j) pairs and measures
    line lengths. This could be extended to use beta-divergence distance
    (Deckert et al. (2025)) instead of Euclidean distance for the recurrence condition.
    Expected benefit: Faster computation (from sampling) + better sensitivity

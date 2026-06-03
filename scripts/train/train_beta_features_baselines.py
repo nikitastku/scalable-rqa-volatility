@@ -182,13 +182,13 @@ def main() -> None:
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--beta", type=float, default=1.0,
-                        help="β-divergence parameter. Literature: {0,0.5,1,1.5,2,3,4,5}")
+                        help="β-divergence parameter: {0,0.5,1,1.5,2,3,4,5}")
     parser.add_argument("--m", type=int, default=4,
-                        help="Embedding dimension (Marwan 2007: typically 2-8)")
+                        help="Embedding dimension (2-8)")
     parser.add_argument("--tau", type=int, default=2,
-                        help="Embedding delay (Zbilut 1992: typically 1-5)")
+                        help="Embedding delay (1-5)")
     parser.add_argument("--rr", type=float, default=0.1,
-                        help="Recurrence rate for ε selection (Marwan 2024: 0.05-0.20)")
+                        help="Recurrence rate for ε selection (0.05-0.20)")
     args = parser.parse_args()
 
     cfg = BetaBaselineConfig()

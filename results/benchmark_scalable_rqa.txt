@@ -1,6 +1,6 @@
 ================================================================================
   SCALABLE RQA BENCHMARK — DATASET 3
-  Methods: Standard (full RP) | RQA_woRP (Marwan 2025) | RQA_Samp (Marwan 2025)
+  Methods: Standard (full RP) | RQA_woRP (Marwan 2026) | RQA_Samp (Marwan 2026)
 ================================================================================
 
 
