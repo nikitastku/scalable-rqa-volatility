@@ -855,26 +855,26 @@ RQA computation times:
 Per-stock metrics (mean +/- std across 503 stocks):
   Model                   AUC                    F1                N stocks
   rf_std                  0.9874 +/- 0.0126      0.8784 +/- 0.0819      503
-  rf_std_rqa              0.9880 +/- 0.0122      0.8797 +/- 0.0824      503
+  rf_std_rqa              0.9880 +/- 0.0128      0.8807 +/- 0.0813      503
   rf_std_beta (b=2.0)     0.9879 +/- 0.0124      0.8785 +/- 0.0825      503
   lr_std                  0.9899 +/- 0.0091      0.8786 +/- 0.0962      503
-  lr_std_rqa              0.9899 +/- 0.0091      0.8802 +/- 0.0960      503
+  lr_std_rqa              0.9900 +/- 0.0090      0.8804 +/- 0.0958      503
   lr_std_beta (b=2.0)     0.9900 +/- 0.0091      0.8795 +/- 0.0961      503
 
 Wilcoxon signed-rank tests (per-stock AUC, H1: combined > std-only):
   Comparison                            Mean dAUC   Median dAUC   p-value   Sig
-  RF Std -> RF Std+RQA                  +0.00057     +0.00031     0.0000    ***
+  RF Std -> RF Std+RQA                  +0.00056     +0.00038     0.0000    ***
   RF Std -> RF Std+b-RQA (b=2.0)        +0.00045     +0.00020     0.0012     **
-  LogReg Std -> LogReg Std+RQA          -0.00001     -0.00001     0.9433   n.s.
+  LogReg Std -> LogReg Std+RQA          +0.00003     -0.00001     0.0002    ***
   LogReg Std -> LogReg Std+b-RQA        +0.00001     +0.00001     0.2255   n.s.
 
 Bootstrap CIs (pooled across all stocks, 2000 resamples):
   Model                   AUC               95% CI             F1              95% CI
   rf_std                  0.9834    [0.9831, 0.9837]    0.8833    [0.8820, 0.8847]
-  rf_std_rqa              0.9839    [0.9836, 0.9842]    0.8844    [0.8831, 0.8857]
+  rf_std_rqa              0.9839    [0.9836, 0.9842]    0.8852    [0.8839, 0.8866]
   rf_std_beta             0.9837    [0.9834, 0.9840]    0.8830    [0.8816, 0.8844]
   lr_std                  0.9828    [0.9824, 0.9832]    0.8865    [0.8851, 0.8878]
-  lr_std_rqa              0.9828    [0.9824, 0.9832]    0.8881    [0.8867, 0.8893]
+  lr_std_rqa              0.9828    [0.9824, 0.9832]    0.8881    [0.8868, 0.8894]
   lr_std_beta             0.9828    [0.9824, 0.9832]    0.8873    [0.8860, 0.8886]
 
 INTERPRETATION: Dataset 3 provides the statistically rigorous evidence for

@@ -352,12 +352,15 @@ STD_FEATURE_COLS_D3 = [
 ]
 
 
-def compute_rqa_per_stock_d3(df, rqa_cfg, rqa_cols):
+def compute_rqa_per_stock_d3(df, rqa_cfg, rqa_cols, eps_train_df=None):
     """Compute RQA per stock for D3."""
     all_rqa = []
     tickers = sorted(df["ticker"].unique())
-    sample_tickers = tickers[:min(10, len(tickers))]
-    sample_blocks = [df[df["ticker"] == t][list(rqa_cols)].to_numpy(dtype=float) for t in sample_tickers]
+
+    eps_source = df if eps_train_df is None else eps_train_df
+    eps_tickers = sorted(eps_source["ticker"].unique())[:min(10, eps_source["ticker"].nunique())]
+    sample_blocks = [eps_source.loc[eps_source["ticker"] == t, list(rqa_cols)].to_numpy(dtype=float)
+                     for t in eps_tickers]
     combined_sample = np.concatenate(sample_blocks, axis=0)
     eps_fixed = estimate_epsilon_from_train(combined_sample, rqa_cfg)
 
@@ -449,7 +452,7 @@ def run_d3(logger):
     logger.info("Computing RQA features (default, step=20)...")
     rqa_cfg = RQAConfig(window=60, step=20, recurrence_rate=0.1,
                         embed=EmbeddingConfig(m=4, tau=2), mode="joint")
-    X_rqa_full = compute_rqa_per_stock_d3(full, rqa_cfg, ("log_return", "rv"))
+    X_rqa_full = compute_rqa_per_stock_d3(full, rqa_cfg, ("log_return", "rv"), eps_train_df=train)
     X_rqa_tr = X_rqa_full.iloc[:n_tr].reset_index(drop=True)
     X_rqa_va = X_rqa_full.iloc[n_tr:n_tr+n_va].reset_index(drop=True)
     X_rqa_te = X_rqa_full.iloc[n_tr+n_va:].reset_index(drop=True)

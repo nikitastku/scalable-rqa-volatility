@@ -14,7 +14,7 @@ This project tests whether scalable recurrence-based features — Recurrence Qua
 
 The investigation is run on three datasets that span five orders of magnitude in physical bar size: a long synthetic daily series (D1, 1902–2017), a ten-year S&P 500 macro-financial panel (D2, 2010–2019), and an intraday cross-section of 503 S&P 500 stocks sampled at 2-minute resolution (D3).
 
-**Headline finding.** On D3, where statistical power is sufficient, adding RQA features to a Random Forest baseline produces a per-stock paired ΔAUC of **+0.00057** (Wilcoxon signed-rank p < 0.001, n = 503 tickers). The gain is small in absolute terms because the standard rolling features already reach AUC 0.983, but it is statistically robust:
+**Headline finding.** On D3, where statistical power is sufficient, adding RQA features to a Random Forest baseline produces a per-stock paired ΔAUC of **+0.00056** (Wilcoxon signed-rank p < 0.001, n = 503 tickers). The gain is small in absolute terms because the standard rolling features already reach AUC 0.983, but it is statistically robust:
 
 - it survives an aggregation experiment (the gain *grows* to +0.012 when bars are coarsened to 10-min / 30-min);
 - it survives a purged walk-forward CV protocol (mean ΔAUC across 5 folds = **+0.00176**, Wilcoxon p = 0.03125);
@@ -161,7 +161,7 @@ For verification — these numbers appear identically in the thesis, in `results
 |--|--|--|--|
 | RF Std AUC | 0.878 | 0.977 | 0.987 (per-stock mean) |
 | RF Std+RQA AUC | 0.878 | 0.956 | 0.988 (per-stock mean) |
-| Paired ΔAUC | −0.0001 (n.s.) | −0.020 (n.s.) | +0.00057 (p < 0.001) |
+| Paired ΔAUC | −0.0001 (n.s.) | −0.020 (n.s.) | +0.00056 (p < 0.001) |
 | Test method | Bootstrap | Bootstrap | Per-stock Wilcoxon |
 
 Distribution shift (train→test RV ratio): D1 = 0.17×, D2 = 0.97×, D3 = 0.95×.

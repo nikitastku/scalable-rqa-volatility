@@ -24,7 +24,7 @@ SE        = 0.00027
 n_folds   = 5
 Wilcoxon (H1: ΔAUC > 0):  p = 0.03125
 
-Reference: headline single-chronological-split ΔAUC was +0.00057
+Reference: headline single-chronological-split ΔAUC was +0.00056
            (per-stock Wilcoxon p < 0.001, full 503-ticker panel).
 
 INTERPRETATION

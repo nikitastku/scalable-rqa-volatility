@@ -273,7 +273,7 @@ def main() -> None:
     print(f"Mean ΔAUC  = {mean_d:+.5f}   SE = {se_d:.5f}   n_folds = {len(deltas)}")
     print(f"Wilcoxon signed-rank (H1: ΔAUC > 0):  p = {p_str}")
     print()
-    print("Reference: headline single-split (chronological) ΔAUC was +0.00057 (p<0.001 per-stock Wilcoxon).")
+    print("Reference: headline single-split (chronological) ΔAUC was +0.00056 (p<0.001 per-stock Wilcoxon).")
 
     out_txt = repo_root() / "results" / "walk_forward_cv_d3.txt"
     out_txt.parent.mkdir(parents=True, exist_ok=True)
@@ -304,7 +304,7 @@ def main() -> None:
         fp.write(f"n_folds   = {len(deltas)}\n")
         fp.write(f"Wilcoxon (H1: ΔAUC > 0):  p = {p_str}\n\n")
 
-        fp.write("Reference: headline single-chronological-split ΔAUC was +0.00057\n")
+        fp.write("Reference: headline single-chronological-split ΔAUC was +0.00056\n")
         fp.write("           (per-stock Wilcoxon p < 0.001, full 503-ticker panel).\n\n")
 
         fp.write("INTERPRETATION\n")
@@ -320,8 +320,8 @@ def main() -> None:
 
     folds = df["fold"].to_numpy()
     ax1.axhline(0, color="black", linewidth=0.8, alpha=0.6)
-    ax1.axhline(0.00057, color="#1E2761", linewidth=1.4, linestyle="--", alpha=0.7,
-                label="headline single-split ΔAUC (+0.00057)")
+    ax1.axhline(0.00056, color="#1E2761", linewidth=1.4, linestyle="--", alpha=0.7,
+                label="headline single-split ΔAUC (+0.00056)")
     colors = ["#10B981" if d > 0 else "#EF4444" for d in deltas]
     ax1.bar(folds, deltas, color=colors, edgecolor="black", linewidth=0.6, alpha=0.85)
     for f, d in zip(folds, deltas):
@@ -348,7 +348,7 @@ def main() -> None:
              f"Wilcoxon  (H1: ΔAUC > 0)\np = {p_str}",
              fontsize=10, color="#374151")
     ax2.text(0.05, 0.20,
-             "Headline single-split  ΔAUC = +0.00057",
+             "Headline single-split  ΔAUC = +0.00056",
              fontsize=10, color="#6B7280", style="italic")
     ax2.text(0.05, 0.10,
              f"→ result {'survives' if mean_d > 0 else 'does not survive'} "
