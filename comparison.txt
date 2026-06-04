@@ -1,3 +1,8 @@
+NOTE: This text file is primarily a working record for noting down results, observations, and intermediate findings. 
+Some sections may not be fully up to date or may have been superseded by later analysis. 
+Treat this file as the main information log for the project, but verify final values and claims against the latest manuscript, 
+tables, and statistical-test outputs.
+
 ================================================================================
   DATASET 1 — FULL MODEL COMPARISON (Final, 2026-03-08)
   Dataset: Core_TimeSeries.csv (synthetic, 1902–2017, non-stationary)
