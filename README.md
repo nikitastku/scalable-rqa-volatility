@@ -207,6 +207,15 @@ The processed splits in `data/processed/` are deterministic functions of the raw
 - López de Prado, M. (2018). *Advances in Financial Machine Learning* (ch. 7, purged walk-forward CV). Hoboken, NJ: John Wiley & Sons.
 - Corsi, F. (2009). *A simple approximate long-memory model of realized volatility* (HAR-RV). Journal of Financial Econometrics, 7(2), 174–196. https://doi.org/10.1093/jjfinec/nbp001
 - Glosten, L. R., Jagannathan, R., & Runkle, D. E. (1993). *On the relation between the expected value and the volatility of the nominal excess return on stocks* (GJR-GARCH). The Journal of Finance, 48(5), 1779–1801. https://doi.org/10.1111/j.1540-6261.1993.tb05128.x
+- Takens, F. (1981). *Detecting strange attractors in turbulence.* In Dynamical Systems and Turbulence, Warwick 1980 (Lecture Notes in Mathematics, Vol. 898, pp. 366–381). Springer. https://doi.org/10.1007/BFb0091924  *(delay embedding)*
+- Hochreiter, S., & Schmidhuber, J. (1997). *Long short-term memory.* Neural Computation, 9(8), 1735–1780. https://doi.org/10.1162/neco.1997.9.8.1735  *(LSTM baseline)*
+- Xu, Z., Liechty, J., Benthall, S., Skar-Gislinge, N., & McComb, C. (2024). *GARCH-informed neural networks for volatility prediction in financial markets.* In Proceedings of the 5th ACM International Conference on AI in Finance (ICAIF '24) (pp. 600–607). https://doi.org/10.1145/3677052.3698600  *(GINN baseline)*
+- Breiman, L. (2001). *Random forests.* Machine Learning, 45(1), 5–32. https://doi.org/10.1023/A:1010933404324  *(classifier; also the origin of permutation importance)*
+- Fisher, A., Rudin, C., & Dominici, F. (2019). *All models are wrong, but many are useful: Learning a variable's importance by studying an entire class of prediction models simultaneously.* Journal of Machine Learning Research, 20(177), 1–81. https://jmlr.org/papers/v20/18-760.html  *(model-agnostic permutation importance)*
+- Eckmann, J.-P., Oliffson Kamphorst, S., & Ruelle, D. (1987). *Recurrence plots of dynamical systems.* Europhysics Letters, 4(9), 973–977. https://doi.org/10.1209/0295-5075/4/9/004  *(recurrence plots)*
+- Zbilut, J. P., & Webber, C. L., Jr. (1992). *Embeddings and delays as derived from quantification of recurrence plots.* Physics Letters A, 171(3–4), 199–203. https://doi.org/10.1016/0375-9601(92)90426-M  *(RQA)*
+- Wilcoxon, F. (1945). *Individual comparisons by ranking methods.* Biometrics Bulletin, 1(6), 80–83. https://doi.org/10.2307/3001968  *(signed-rank test)*
+- Pedregosa, F., et al. (2011). *Scikit-learn: Machine learning in Python.* Journal of Machine Learning Research, 12, 2825–2830. https://jmlr.org/papers/v12/pedregosa11a.html  *(implementation library)*
 
 ---
 
