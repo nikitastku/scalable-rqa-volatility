@@ -219,6 +219,14 @@ The processed splits in `data/processed/` are deterministic functions of the raw
 
 ---
 
+## AI Use Disclosure
+
+Artificial intelligence tools were used as supplementary support during the development and documentation of this project. Their use included assistance with brainstorming, debugging support, code review suggestions, improving documentation clarity, and refining the presentation of reproducibility instructions.
+
+All substantive research decisions, methodological choices, implementation work, result validation, interpretation of findings, and final responsibility for the submitted project remained with the author.
+
+---
+
 ## Licence and acknowledgements
 
 This thesis was conducted under the supervision of Dr. Ir. Martijn Boussé and Dr. Ir. Philippe Dreesen at Maastricht University. Code is provided for the purpose of academic evaluation. Third-party data is subject to the providers' respective terms.
