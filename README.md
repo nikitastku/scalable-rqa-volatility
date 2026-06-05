@@ -48,7 +48,7 @@ The notebook walks through every result in the thesis end-to-end. With artifacts
 
 ```
 scalable-rqa-volatility/
-├── configs/                       YAML configs for the three data pipelines
+├── configs/                       YAML configs for the data pipelines
 ├── data/
 │   ├── raw/                       Raw input data (CSVs + parquet)
 │   └── processed/                 Train/val/test parquets + summary CSVs
