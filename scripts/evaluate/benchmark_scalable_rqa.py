@@ -687,7 +687,7 @@ def main():
     tickers = sorted(train["ticker"].unique())
     logger.info(f"Available tickers: {len(tickers)}")
 
-    sample_ticker = tickers[len(tickers) // 2]  # middle ticker
+    sample_ticker = tickers[len(tickers) // 2] 
     df_stock = train[train["ticker"] == sample_ticker].reset_index(drop=True)
     logger.info(f"Sample stock: {sample_ticker}, {len(df_stock)} bars")
 

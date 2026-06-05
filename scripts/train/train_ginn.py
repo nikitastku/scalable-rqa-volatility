@@ -56,7 +56,6 @@ class TrainConfig:
     weight_decay: float = 1e-5
     patience: int = 10            
     num_workers: int = 0
-    # --- NEW ---
     scheduler_factor: float = 0.5
     scheduler_patience: int = 3
     max_grad_norm: float = 1.0
